@@ -17,7 +17,7 @@ async function start() {
   app.use(express.json());
 
   app.use((req, res, next) => {
-    console.log('[USER SERVICE]', req.method, req.originalUrl, req.body);
+    console.log('[USER SERVICE]', req.method, req.originalUrl);
     next();
   });
 

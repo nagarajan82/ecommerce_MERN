@@ -62,9 +62,14 @@ function Header() {
 
         <nav className='topbar__actions'>
           {!auth?.token ? (
-            <Link to='/login' className='header-btn'>
-              Login
-            </Link>
+            <>
+              <Link to='/login' className='header-btn'>
+                Login
+              </Link>
+              <Link to='/signup' className='header-btn'>
+                Sign up
+              </Link>
+            </>
           ) : (
             <button
               type='button'

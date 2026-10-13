@@ -14,22 +14,31 @@ function signToken(user) {
 
 async function register(req, res) {
   try {
-    const { name, email, password, role } = req.body;
-    if (!name || !email || !password) {
+    const { name, email, password } = req.body;
+    if (
+      typeof name !== 'string' ||
+      typeof email !== 'string' ||
+      typeof password !== 'string' ||
+      !name.trim() ||
+      !email.trim() ||
+      !password
+    ) {
       return res.status(400).json({ message: 'name, email, password are required' });
     }
 
-    const existingUser = await User.findOne({ email });
+    const normalizedName = name.trim();
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
       return res.status(409).json({ message: 'User already exists' });
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await User.create({
-      name,
-      email,
-      passwordHash,
-      role: role === 'admin' ? 'admin' : 'customer'
+      name: normalizedName,
+      email: normalizedEmail,
+      passwordHash
     });
 
     const token = signToken(user);
@@ -53,6 +62,9 @@ async function register(req, res) {
       }
     });
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({ message: 'User already exists' });
+    }
     return res.status(500).json({ message: error.message });
   }
 }

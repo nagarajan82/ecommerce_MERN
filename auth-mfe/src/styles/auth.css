@@ -56,6 +56,17 @@
  width: 100%;
 }
 
+.auth-form__switch {
+ margin: 0;
+ text-align: center;
+ color: #666666;
+}
+
+.auth-form__switch a {
+ color: #2874f0;
+ font-weight: 600;
+}
+
 @media (max-width: 840px) {
  .auth-card {
   grid-template-columns: 1fr;

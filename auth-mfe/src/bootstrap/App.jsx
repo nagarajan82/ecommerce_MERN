@@ -66,7 +66,7 @@ export default function App({ apiBaseUrl, mode = 'login' }) {
       setStoredAuth(data);
       setSuccess(isLogin ? 'Login successful.' : 'Registration successful.');
 
-      window.location.href = '/';
+      window.setTimeout(() => window.location.assign('/'), 1200);
     } catch (error) {
       setMessage('Unable to complete request.');
     } finally {
@@ -133,6 +133,13 @@ export default function App({ apiBaseUrl, mode = 'login' }) {
             >
               {submitting ? 'Please wait...' : copy.title}
             </button>
+
+            <p className='auth-form__switch'>
+              {isLogin ? 'New to the store?' : 'Already have an account?'}{' '}
+              <a href={isLogin ? '/signup' : '/login'}>
+                {isLogin ? 'Create an account' : 'Log in'}
+              </a>
+            </p>
           </form>
         </div>
       </div>
