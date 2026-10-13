@@ -1,0 +1,5 @@
+# This repository intentionally checks in graph snapshots for learning/review.
+*
+!graph.db
+!graph.html
+!d3.v7.min.js
