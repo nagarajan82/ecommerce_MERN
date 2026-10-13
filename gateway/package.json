@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "src/server.js",
   "scripts": {
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "test": "jest --coverage"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -12,5 +13,9 @@
     "express-rate-limit": "^7.5.0",
     "http-proxy-middleware": "^3.0.3",
     "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0"
   }
 }

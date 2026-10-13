@@ -93,7 +93,17 @@ app.use('/api/orders', proxyWithPrefix(services.order, '/api/orders'));
 
 app.use('/api/payments', proxyWithPrefix(services.payment, '/api/payments'));
 
-app.listen(PORT, () => {
-  console.log(`Gateway running on ${PORT}`);
-  console.log('Proxy targets:', services);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Gateway running on ${PORT}`);
+    console.log('Proxy targets:', services);
+  });
+}
+
+module.exports = {
+  app,
+  attachUser,
+  requireAuth,
+  proxyWithPrefix,
+  services,
+};

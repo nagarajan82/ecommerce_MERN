@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import '../styles/checkout.css';
 
-function getCart() {
+export function getCart() {
   const raw = localStorage.getItem('mf_cart');
   return raw ? JSON.parse(raw) : [];
 }
 
-function setCart(cart) {
+export function setCart(cart) {
   localStorage.setItem('mf_cart', JSON.stringify(cart));
   localStorage.setItem(
     'mf_cart_count',
@@ -15,24 +15,24 @@ function setCart(cart) {
   window.dispatchEvent(new Event('mf-cart-changed'));
 }
 
-function getStoredAuth() {
+export function getStoredAuth() {
   const raw = localStorage.getItem('mf_auth');
   return raw ? JSON.parse(raw) : null;
 }
 
-function getTotal(cart) {
+export function getTotal(cart) {
   return cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 }
 
-function getProductTitle(item) {
+export function getProductTitle(item) {
   return item?.name || item?.title || 'Product';
 }
 
-function getProductDescription(item) {
+export function getProductDescription(item) {
   return item?.description || 'No description available.';
 }
 
-function getProductImage(item) {
+export function getProductImage(item) {
   return item?.image || 'https://via.placeholder.com/140x140?text=Product';
 }
 

@@ -17,7 +17,7 @@ const OrdersApp = React.lazy(() => import('orders_mfe/App'));
 
 window.__API_BASE_URL__ = window.__API_BASE_URL__ || 'http://localhost:8080';
 
-function Header() {
+export function Header() {
   const [auth, setAuth] = useState(getStoredAuth());
   const [cartCount, setCartCount] = useState(
     Number(localStorage.getItem('mf_cart_count') || 0)
@@ -122,7 +122,7 @@ function Header() {
   );
 }
 
-function RequireAuth({ children }) {
+export function RequireAuth({ children }) {
   const auth = getStoredAuth();
 
   if (!auth?.token) {
@@ -132,7 +132,7 @@ function RequireAuth({ children }) {
   return children;
 }
 
-function ShellPage({ children }) {
+export function ShellPage({ children }) {
   return (
     <main className='shell-main'>
       <div className='shell-container'>{children}</div>
@@ -140,7 +140,7 @@ function ShellPage({ children }) {
   );
 }
 
-function AppRouter() {
+export function AppRouter() {
   const remoteProps = useMemo(
     () => ({
       apiBaseUrl: window.__API_BASE_URL__,

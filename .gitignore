@@ -1,2 +1,7 @@
 node_modules
 .DS_Store
+coverage/
+dist/
+.codex/
+# Added by code-review-graph
+.code-review-graph/

@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import '../styles/orders.css';
 
-function getStoredAuth() {
-  const raw = localStorage.getItem('mf_auth');
-  return raw ? JSON.parse(raw) : null;
+export function getStoredAuth() {
+  try {
+    const raw = localStorage.getItem('mf_auth');
+    return raw ? JSON.parse(raw) : null;
+  } catch (error) {
+    return null;
+  }
 }
 
 export default function App({ apiBaseUrl }) {

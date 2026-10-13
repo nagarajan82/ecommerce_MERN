@@ -2,24 +2,24 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import '../styles/catalog.css';
 
-function getProductTitle(product) {
+export function getProductTitle(product) {
   return product?.title || product?.name || 'Product';
 }
 
-function getProductDescription(product) {
+export function getProductDescription(product) {
   return product?.description || 'No description available.';
 }
 
-function getProductImage(product) {
+export function getProductImage(product) {
   return product?.image || 'https://via.placeholder.com/280x280?text=Product';
 }
 
-function getCart() {
+export function getCart() {
   const raw = localStorage.getItem('mf_cart');
   return raw ? JSON.parse(raw) : [];
 }
 
-function setCart(cart) {
+export function setCart(cart) {
   localStorage.setItem('mf_cart', JSON.stringify(cart));
   localStorage.setItem(
     'mf_cart_count',
@@ -28,7 +28,7 @@ function setCart(cart) {
   window.dispatchEvent(new Event('mf-cart-changed'));
 }
 
-function addToCart(product) {
+export function addToCart(product) {
   const productTitle = getProductTitle(product);
 
   if (!product?.stock || product.stock <= 0) {
@@ -63,7 +63,7 @@ function addToCart(product) {
   return { ok: true, message: `${productTitle} added to cart.` };
 }
 
-function ProductCard({ product, onAdd }) {
+export function ProductCard({ product, onAdd }) {
   const isOutOfStock = !product.stock || product.stock <= 0;
   const productTitle = getProductTitle(product);
   const productDescription = getProductDescription(product);
@@ -124,7 +124,7 @@ function ProductCard({ product, onAdd }) {
   );
 }
 
-function ProductList({ apiBaseUrl }) {
+export function ProductList({ apiBaseUrl }) {
   const [products, setProducts] = useState([]);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
@@ -226,7 +226,7 @@ function ProductList({ apiBaseUrl }) {
   );
 }
 
-function ProductDetails({ apiBaseUrl, productId }) {
+export function ProductDetails({ apiBaseUrl, productId }) {
   const [product, setProduct] = useState(null);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);

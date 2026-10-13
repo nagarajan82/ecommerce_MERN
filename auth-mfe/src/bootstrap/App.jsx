@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import '../styles/auth.css';
 
-function setStoredAuth(data) {
+export function setStoredAuth(data) {
   localStorage.setItem('mf_auth', JSON.stringify(data));
   window.dispatchEvent(new Event('mf-auth-changed'));
 }
