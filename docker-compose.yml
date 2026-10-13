@@ -148,6 +148,34 @@ services:
     depends_on:
       - gateway
 
+  auth-mfe:
+    build:
+      context: .
+      dockerfile: auth-mfe/Dockerfile
+    ports:
+      - "3001:3001"
+
+  catalog-mfe:
+    build:
+      context: .
+      dockerfile: catalog-mfe/Dockerfile
+    ports:
+      - "3002:3002"
+
+  checkout-mfe:
+    build:
+      context: .
+      dockerfile: checkout-mfe/Dockerfile
+    ports:
+      - "3003:3003"
+
+  orders-mfe:
+    build:
+      context: .
+      dockerfile: orders-mfe/Dockerfile
+    ports:
+      - "3004:3004"
+
 volumes:
   mongo_user_data:
   mongo_product_data:
