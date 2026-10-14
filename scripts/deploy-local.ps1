@@ -159,7 +159,7 @@ while ((Get-Date) - $StartTime -lt (New-TimeSpan -Seconds $TimeoutSeconds)) {
   foreach ($Ep in $Endpoints) {
     try {
       $Response = Invoke-RestMethod -Uri $Ep.Url -Method Get -TimeoutSec 3 -ErrorAction SilentlyContinue
-      if ($Response.status -eq "OK" -or $Response.status -eq "ok" -or $Response.status -eq "healthy") {
+      if ($Response.status -eq "OK" -or $Response.status -eq "ok" -or $Response.status -eq "healthy" -or $Response.ok -eq $true) {
         # Endpoint healthy
       } else {
         $Pending++
