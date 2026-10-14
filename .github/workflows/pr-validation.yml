@@ -1,0 +1,211 @@
+name: PR Validation & CI
+
+'on':
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  unit-tests:
+    name: Test (${{ matrix.package }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - package: apps/frontend
+            name: apps-frontend
+          - package: auth-mfe
+            name: auth-mfe
+          - package: catalog-mfe
+            name: catalog-mfe
+          - package: checkout-mfe
+            name: checkout-mfe
+          - package: orders-mfe
+            name: orders-mfe
+          - package: gateway
+            name: gateway
+          - package: services/user-service
+            name: services-user-service
+          - package: services/product-service
+            name: services-product-service
+          - package: services/order-service
+            name: services-order-service
+          - package: services/payment-service
+            name: services-payment-service
+          - package: services/notification-service
+            name: services-notification-service
+          - package: services/frontend-log-collector
+            name: services-frontend-log-collector
+          - package: packages/observability
+            name: packages-observability
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'npm'
+          cache-dependency-path: ${{ matrix.package }}/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ${{ matrix.package }}
+        run: npm ci
+
+      - name: Run unit tests with coverage
+        working-directory: ${{ matrix.package }}
+        env:
+          CI: 'true'
+        run: npm test -- --coverage
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-${{ matrix.name }}
+          path: ${{ matrix.package }}/coverage/lcov.info
+          if-no-files-found: ignore
+          retention-days: 1
+
+  sonarqube-analysis:
+    name: SonarQube Cloud Analysis & Quality Gate
+    needs: [unit-tests]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository with full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
+      - name: Download all coverage artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-*
+          path: coverage-artifacts
+
+      - name: Normalize and map coverage reports
+        run: |
+          node -e "
+          const fs = require('fs');
+          const path = require('path');
+
+          const packages = [
+            { package: 'apps/frontend', name: 'apps-frontend' },
+            { package: 'auth-mfe', name: 'auth-mfe' },
+            { package: 'catalog-mfe', name: 'catalog-mfe' },
+            { package: 'checkout-mfe', name: 'checkout-mfe' },
+            { package: 'orders-mfe', name: 'orders-mfe' },
+            { package: 'gateway', name: 'gateway' },
+            { package: 'services/user-service', name: 'services-user-service' },
+            { package: 'services/product-service', name: 'services-product-service' },
+            { package: 'services/order-service', name: 'services-order-service' },
+            { package: 'services/payment-service', name: 'services-payment-service' },
+            { package: 'services/notification-service', name: 'services-notification-service' },
+            { package: 'services/frontend-log-collector', name: 'services-frontend-log-collector' },
+            { package: 'packages/observability', name: 'packages-observability' }
+          ];
+
+          let mappedCount = 0;
+          packages.forEach(pkg => {
+            const artifactFile = path.join('coverage-artifacts', 'coverage-' + pkg.name, 'lcov.info');
+            if (fs.existsSync(artifactFile)) {
+              const content = fs.readFileSync(artifactFile, 'utf8');
+              const targetDir = path.join(pkg.package, 'coverage');
+              fs.mkdirSync(targetDir, { recursive: true });
+
+              const prefix = pkg.package + '/';
+              const normalized = content.replace(/^SF:(?:\.\\|\.\/)?(.*)$/gm, (match, p1) => {
+                const posixPath = p1.replace(/\\\\/g, '/').replace(/\\/g, '/');
+                if (posixPath.startsWith(prefix)) return 'SF:' + posixPath;
+                return 'SF:' + prefix + posixPath;
+              });
+
+              const targetFile = path.join(targetDir, 'lcov.info');
+              fs.writeFileSync(targetFile, normalized, 'utf8');
+              mappedCount++;
+              console.log('Processed coverage for ' + pkg.package + ' -> ' + targetFile);
+            } else {
+              console.warn('Coverage artifact missing for: ' + pkg.name);
+            }
+          });
+          console.log('Total coverage reports mapped: ' + mappedCount + ' of ' + packages.length);
+          "
+
+      - name: SonarQube Cloud Scan
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.organization=${{ vars.SONAR_ORGANIZATION || secrets.SONAR_ORGANIZATION }}
+            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY || secrets.SONAR_PROJECT_KEY }}
+
+      - name: SonarQube Quality Gate Check
+        uses: SonarSource/sonarqube-quality-gate-action@v1
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
+
+  build-frontends:
+    name: Build (${{ matrix.app }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app:
+          - apps/frontend
+          - auth-mfe
+          - catalog-mfe
+          - checkout-mfe
+          - orders-mfe
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'npm'
+          cache-dependency-path: ${{ matrix.app }}/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ${{ matrix.app }}
+        run: npm ci
+
+      - name: Build production bundle
+        working-directory: ${{ matrix.app }}
+        env:
+          CI: 'true'
+          NODE_OPTIONS: '--max-old-space-size=4096'
+        run: npm run build
+
+  validate-docker-compose:
+    name: Validate Docker Compose
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate Docker Compose configuration
+        run: docker compose config --quiet
