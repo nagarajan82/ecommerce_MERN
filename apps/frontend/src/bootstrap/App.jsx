@@ -9,6 +9,7 @@ import {
 } from 'react-router-dom';
 import '../styles/global.css';
 import { clearStoredAuth, getStoredAuth } from '../lib/api';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 const AuthApp = React.lazy(() => import('auth_mfe/App'));
 const CatalogApp = React.lazy(() => import('catalog_mfe/App'));
@@ -16,6 +17,7 @@ const CheckoutApp = React.lazy(() => import('checkout_mfe/App'));
 const OrdersApp = React.lazy(() => import('orders_mfe/App'));
 
 window.__API_BASE_URL__ = window.__API_BASE_URL__ || 'http://localhost:8080';
+window.__LOG_COLLECTOR_URL__ = window.__LOG_COLLECTOR_URL__ || 'http://localhost:4006';
 
 export function Header() {
   const [auth, setAuth] = useState(getStoredAuth());
@@ -144,6 +146,7 @@ export function AppRouter() {
   const remoteProps = useMemo(
     () => ({
       apiBaseUrl: window.__API_BASE_URL__,
+      logCollectorUrl: window.__LOG_COLLECTOR_URL__,
     }),
     []
   );
@@ -153,39 +156,45 @@ export function AppRouter() {
       <Header />
 
       <ShellPage>
-        <Suspense fallback={<div className='shell-loader'>Loading...</div>}>
-          <Routes>
-            <Route path='/' element={<CatalogApp {...remoteProps} />} />
-            <Route
-              path='/products/:id'
-              element={<CatalogApp {...remoteProps} />}
-            />
-            <Route
-              path='/login'
-              element={<AuthApp mode='login' {...remoteProps} />}
-            />
-            <Route
-              path='/signup'
-              element={<AuthApp mode='signup' {...remoteProps} />}
-            />
-            <Route
-              path='/checkout'
-              element={
-                <RequireAuth>
-                  <CheckoutApp {...remoteProps} />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path='/orders'
-              element={
-                <RequireAuth>
-                  <OrdersApp {...remoteProps} />
-                </RequireAuth>
-              }
-            />
-          </Routes>
-        </Suspense>
+        <ErrorBoundary
+          appName='frontend-shell'
+          title='Unable to load page'
+          description='There was a problem loading this section. Please try again.'
+        >
+          <Suspense fallback={<div className='shell-loader'>Loading...</div>}>
+            <Routes>
+              <Route path='/' element={<CatalogApp {...remoteProps} />} />
+              <Route
+                path='/products/:id'
+                element={<CatalogApp {...remoteProps} />}
+              />
+              <Route
+                path='/login'
+                element={<AuthApp mode='login' {...remoteProps} />}
+              />
+              <Route
+                path='/signup'
+                element={<AuthApp mode='signup' {...remoteProps} />}
+              />
+              <Route
+                path='/checkout'
+                element={
+                  <RequireAuth>
+                    <CheckoutApp {...remoteProps} />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path='/orders'
+                element={
+                  <RequireAuth>
+                    <OrdersApp {...remoteProps} />
+                  </RequireAuth>
+                }
+              />
+            </Routes>
+          </Suspense>
+        </ErrorBoundary>
       </ShellPage>
     </>
   );
@@ -194,7 +203,9 @@ export function AppRouter() {
 export default function App() {
   return (
     <BrowserRouter>
-      <AppRouter />
+      <ErrorBoundary appName='frontend-shell'>
+        <AppRouter />
+      </ErrorBoundary>
     </BrowserRouter>
   );
 }

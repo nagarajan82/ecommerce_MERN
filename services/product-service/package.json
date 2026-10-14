@@ -4,10 +4,11 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "test": "jest --coverage"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage --forceExit"
   },
   "dependencies": {
     "@repo/event-bus": "file:../../packages/event-bus",
+    "@repo/observability": "file:../../packages/observability",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",

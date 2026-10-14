@@ -1,0 +1,16 @@
+{
+  "name": "@repo/observability",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage --forceExit"
+  },
+  "dependencies": {
+    "@elastic/elasticsearch": "^8.17.0",
+    "dotenv": "^16.4.5",
+    "swagger-stats": "^0.99.7"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}

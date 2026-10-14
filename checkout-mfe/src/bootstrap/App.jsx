@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import '../styles/checkout.css';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 export function getCart() {
   const raw = localStorage.getItem('mf_cart');
@@ -197,7 +198,8 @@ export default function App({ apiBaseUrl }) {
   }
 
   return (
-    <section className='checkout-layout'>
+    <ErrorBoundary appName='checkout-mfe'>
+      <section className='checkout-layout'>
       <div className='checkout-left page-card'>
         <h1 className='page-title'>Checkout</h1>
         <p className='page-subtitle'>Review your cart and place the order.</p>
@@ -327,5 +329,6 @@ export default function App({ apiBaseUrl }) {
         </button>
       </aside>
     </section>
+  </ErrorBoundary>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import '../styles/orders.css';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 export function getStoredAuth() {
   try {
@@ -58,7 +59,8 @@ export default function App({ apiBaseUrl }) {
   }, [apiBaseUrl]);
 
   return (
-    <section className='orders-page'>
+    <ErrorBoundary appName='orders-mfe'>
+      <section className='orders-page'>
       <div className='page-card'>
         <h1 className='page-title'>Your Orders</h1>
         <p className='page-subtitle'>
@@ -107,5 +109,6 @@ export default function App({ apiBaseUrl }) {
         )}
       </div>
     </section>
+  </ErrorBoundary>
   );
 }

@@ -47,6 +47,9 @@ services:
     build:
       context: .
       dockerfile: gateway/Dockerfile
+    env_file:
+      - path: services/frontend-log-collector/.env
+        required: false
     environment:
       PORT: 8080
       JWT_SECRET: supersecret
@@ -55,6 +58,8 @@ services:
       ORDER_SERVICE_URL: http://order-service:4003
       PAYMENT_SERVICE_URL: http://payment-service:4004
       FRONTEND_ORIGIN: http://localhost:3000
+      BACKEND_LOG_INDEX: ${BACKEND_LOG_INDEX:-backend-logs}
+      API_TELEMETRY_INDEX: ${API_TELEMETRY_INDEX:-api-telemetry}
     ports:
       - "8080:8080"
     depends_on:
@@ -67,12 +72,19 @@ services:
     build:
       context: .
       dockerfile: services/user-service/Dockerfile
+    env_file:
+      - path: services/frontend-log-collector/.env
+        required: false
     environment:
       PORT: 4001
       MONGO_URI: mongodb://mongo-user:27017/userdb
       JWT_SECRET: supersecret
       RABBITMQ_URL: amqp://rabbitmq
       FRONTEND_ORIGIN: http://localhost:3000
+      BACKEND_LOG_INDEX: ${BACKEND_LOG_INDEX:-backend-logs}
+      API_TELEMETRY_INDEX: ${API_TELEMETRY_INDEX:-api-telemetry}
+    ports:
+      - "4001:4001"
     depends_on:
       - mongo-user
       - rabbitmq
@@ -81,12 +93,19 @@ services:
     build:
       context: .
       dockerfile: services/product-service/Dockerfile
+    env_file:
+      - path: services/frontend-log-collector/.env
+        required: false
     environment:
       PORT: 4002
       MONGO_URI: mongodb://mongo-product:27017/productdb
       JWT_SECRET: supersecret
       RABBITMQ_URL: amqp://rabbitmq
       FRONTEND_ORIGIN: http://localhost:3000
+      BACKEND_LOG_INDEX: ${BACKEND_LOG_INDEX:-backend-logs}
+      API_TELEMETRY_INDEX: ${API_TELEMETRY_INDEX:-api-telemetry}
+    ports:
+      - "4002:4002"
     depends_on:
       - mongo-product
       - rabbitmq
@@ -95,6 +114,9 @@ services:
     build:
       context: .
       dockerfile: services/order-service/Dockerfile
+    env_file:
+      - path: services/frontend-log-collector/.env
+        required: false
     environment:
       PORT: 4003
       MONGO_URI: mongodb://mongo-order:27017/orderdb
@@ -103,6 +125,10 @@ services:
       PRODUCT_SERVICE_URL: http://product-service:4002
       PAYMENT_SERVICE_URL: http://payment-service:4004
       FRONTEND_ORIGIN: http://localhost:3000
+      BACKEND_LOG_INDEX: ${BACKEND_LOG_INDEX:-backend-logs}
+      API_TELEMETRY_INDEX: ${API_TELEMETRY_INDEX:-api-telemetry}
+    ports:
+      - "4003:4003"
     depends_on:
       - mongo-order
       - rabbitmq
@@ -113,12 +139,19 @@ services:
     build:
       context: .
       dockerfile: services/payment-service/Dockerfile
+    env_file:
+      - path: services/frontend-log-collector/.env
+        required: false
     environment:
       PORT: 4004
       MONGO_URI: mongodb://mongo-payment:27017/paymentdb
       JWT_SECRET: supersecret
       RABBITMQ_URL: amqp://rabbitmq
       FRONTEND_ORIGIN: http://localhost:3000
+      BACKEND_LOG_INDEX: ${BACKEND_LOG_INDEX:-backend-logs}
+      API_TELEMETRY_INDEX: ${API_TELEMETRY_INDEX:-api-telemetry}
+    ports:
+      - "4004:4004"
     depends_on:
       - mongo-payment
       - rabbitmq
@@ -127,15 +160,36 @@ services:
     build:
       context: .
       dockerfile: services/notification-service/Dockerfile
+    env_file:
+      - path: services/frontend-log-collector/.env
+        required: false
     environment:
       PORT: 4005
       MONGO_URI: mongodb://mongo-notification:27017/notificationdb
       JWT_SECRET: supersecret
       RABBITMQ_URL: amqp://rabbitmq
       FRONTEND_ORIGIN: http://localhost:3000
+      BACKEND_LOG_INDEX: ${BACKEND_LOG_INDEX:-backend-logs}
+      API_TELEMETRY_INDEX: ${API_TELEMETRY_INDEX:-api-telemetry}
+    ports:
+      - "4005:4005"
     depends_on:
       - mongo-notification
       - rabbitmq
+
+  frontend-log-collector:
+    build:
+      context: .
+      dockerfile: services/frontend-log-collector/Dockerfile
+    env_file:
+      - path: services/frontend-log-collector/.env
+        required: false
+    environment:
+      PORT: 4006
+      FRONTEND_ORIGIN: http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003,http://localhost:3004
+      LOG_INDEX: ${LOG_INDEX:-frontend-logs}
+    ports:
+      - "4006:4006"
 
   frontend:
     build:
@@ -176,9 +230,45 @@ services:
     ports:
       - "3004:3004"
 
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: cadvisor
+    ports:
+      - "8085:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    command:
+      - --housekeeping_interval=15s
+      - --docker_only=true
+      - --disable_metrics=percpu,process,sched,tcp,udp,hugetlb
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    env_file:
+      - path: D:/AILab/monitoring/.env
+        required: false
+      - path: .env
+        required: false
+    volumes:
+      - ./infra/prometheus/prometheus.yml.template:/etc/prometheus/prometheus.yml.template:ro
+      - ./infra/prometheus/entrypoint.sh:/etc/prometheus/entrypoint.sh:ro
+      - prometheus_data:/prometheus
+    entrypoint: ["/bin/sh", "/etc/prometheus/entrypoint.sh"]
+    depends_on:
+      - cadvisor
+
 volumes:
   mongo_user_data:
   mongo_product_data:
   mongo_order_data:
   mongo_payment_data:
   mongo_notification_data:
+  prometheus_data:

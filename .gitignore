@@ -5,3 +5,12 @@ dist/
 .codex/
 # Added by code-review-graph
 .code-review-graph/
+
+# Environment files
+.env
+*.env
+*.env.local
+
+# Binaries and logs
+*.exe
+*.log

@@ -1,0 +1,45 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    environment: 'development'
+    cluster: 'ecommerce-local'
+
+scrape_configs:
+  # 1. Windows Host Metrics from windows_exporter
+  - job_name: 'windows-host'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    static_configs:
+      - targets: ['host.docker.internal:9182']
+        labels:
+          instance: 'windows-host'
+          service: 'windows-os'
+
+  # 2. Docker Container Metrics from cAdvisor
+  - job_name: 'docker-containers'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    static_configs:
+      - targets: ['cadvisor:8080']
+        labels:
+          instance: 'docker-desktop'
+          service: 'docker-engine'
+
+  # 3. Prometheus Self-Monitoring
+  - job_name: 'prometheus'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['localhost:9090']
+
+# BEGIN_REMOTE_WRITE
+remote_write:
+  - url: "__GRAFANA_CLOUD_PROMETHEUS_URL__"
+    basic_auth:
+      username: "__GRAFANA_CLOUD_PROMETHEUS_USERNAME__"
+      password: "__GRAFANA_CLOUD_PROMETHEUS_TOKEN__"
+    queue_config:
+      max_samples_per_send: 1000
+      max_shards: 10
+      capacity: 2500
+# END_REMOTE_WRITE

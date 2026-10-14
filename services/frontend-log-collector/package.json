@@ -1,0 +1,29 @@
+{
+  "name": "frontend-log-collector",
+  "version": "1.0.0",
+  "description": "Microservice for collecting frontend application logs and ingesting into Elastic Cloud",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node src/server.js",
+    "test": "jest --coverage --runInBand"
+  },
+  "dependencies": {
+    "@elastic/elasticsearch": "^8.17.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.0.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "setupFiles": [
+      "<rootDir>/tests/setup.js"
+    ]
+  }
+}

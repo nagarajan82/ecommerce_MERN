@@ -146,4 +146,33 @@ describe('API Gateway Tests', () => {
       expect(res.body).toEqual({ message: 'Unauthorized' });
     });
   });
+
+  describe('Observability & Telemetry Integration', () => {
+    it('should attach x-correlation-id to responses', async () => {
+      const res = await request(serverModule.app)
+        .get('/health')
+        .set('x-correlation-id', 'test-trace-gw-001');
+
+      expect(res.status).toBe(200);
+      expect(res.headers['x-correlation-id']).toBe('test-trace-gw-001');
+    });
+
+    it('should generate x-correlation-id if not provided', async () => {
+      const res = await request(serverModule.app).get('/health');
+      expect(res.status).toBe(200);
+      expect(res.headers['x-correlation-id']).toBeDefined();
+      expect(res.headers['x-correlation-id'].length).toBeGreaterThan(5);
+    });
+
+    it('should expose protected /swagger-stats/stats endpoint', async () => {
+      const res = await request(serverModule.app).get('/swagger-stats/stats');
+      // Requires auth, so 403 Forbidden is expected without credentials
+      expect(res.status).toBe(403);
+    });
+
+    it('should have initialized structured logger with gateway name', () => {
+      expect(serverModule.logger).toBeDefined();
+      expect(serverModule.logger.serviceName).toBe('gateway');
+    });
+  });
 });

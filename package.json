@@ -8,6 +8,7 @@
     "dev:order": "cd services/order-service && npm run start",
     "dev:payment": "cd services/payment-service && npm run start",
     "dev:notification": "cd services/notification-service && npm run start",
+    "dev:collector": "cd services/frontend-log-collector && npm run start",
     "dev:gateway": "cd gateway && npm run start",
     "dev:host": "cd apps/frontend && npm run dev",
     "dev:auth-mfe": "cd auth-mfe && npm run dev",

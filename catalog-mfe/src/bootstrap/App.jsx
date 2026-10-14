@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import '../styles/catalog.css';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 export function getProductTitle(product) {
   return product?.title || product?.name || 'Product';
@@ -382,9 +383,13 @@ export default function App({ apiBaseUrl }) {
     [location.pathname]
   );
 
-  if (isDetailsPage) {
-    return <ProductDetails apiBaseUrl={apiBaseUrl} productId={params.id} />;
-  }
-
-  return <ProductList apiBaseUrl={apiBaseUrl} />;
+  return (
+    <ErrorBoundary appName='catalog-mfe'>
+      {isDetailsPage ? (
+        <ProductDetails apiBaseUrl={apiBaseUrl} productId={params.id} />
+      ) : (
+        <ProductList apiBaseUrl={apiBaseUrl} />
+      )}
+    </ErrorBoundary>
+  );
 }

@@ -9,6 +9,15 @@ const {
   fixRequestBody,
 } = require('http-proxy-middleware');
 
+const {
+  createLogger,
+  createTelemetryMiddleware,
+  correlationMiddleware,
+  attachProxyCorrelation,
+  createErrorHandler,
+} = require('@repo/observability');
+
+const logger = createLogger('gateway');
 const app = express();
 
 const PORT = process.env.PORT || 8080;
@@ -22,8 +31,16 @@ const services = {
   payment: process.env.PAYMENT_SERVICE_URL || 'http://127.0.0.1:4004',
 };
 
+// 1. Correlation tracking (generates or propagates x-correlation-id)
+app.use(correlationMiddleware);
+
+// 2. CORS
 app.use(cors({ origin: FRONTEND_ORIGIN, credentials: true }));
 
+// 3. API Telemetry with swagger-stats
+app.use(createTelemetryMiddleware('gateway', { serviceType: 'gateway' }));
+
+// 4. Rate limiting
 app.use(
   rateLimit({
     windowMs: 60 * 1000,
@@ -33,12 +50,13 @@ app.use(
   })
 );
 
-// Keep JSON parsing only if you truly need it in gateway-level handlers.
-// Since we verify JWT from headers only, this is safe to remove for simpler proxying.
-// app.use(express.json());
-
+// 5. Operational HTTP request logging
 app.use((req, res, next) => {
-  console.log('[GATEWAY]', req.method, req.originalUrl);
+  logger.info(`${req.method} ${req.originalUrl}`, {
+    correlationId: req.correlationId,
+    method: req.method,
+    path: req.originalUrl,
+  });
   next();
 });
 
@@ -70,7 +88,24 @@ function proxyWithPrefix(target, prefix) {
     changeOrigin: true,
     pathRewrite: (path) => `${prefix}${path}`,
     on: {
-      proxyReq: fixRequestBody,
+      proxyReq: (proxyReq, req, res) => {
+        fixRequestBody(proxyReq, req, res);
+        attachProxyCorrelation(proxyReq, req);
+      },
+      error: (err, req, res) => {
+        logger.error(`Proxy failure forwarding to ${target}: ${err.message}`, {
+          correlationId: req?.correlationId,
+          method: req?.method,
+          path: req?.originalUrl,
+          error: err,
+        });
+        if (!res.headersSent) {
+          res.status(502).json({
+            message: 'Bad Gateway - Service Unavailable',
+            correlationId: req?.correlationId,
+          });
+        }
+      },
     },
   });
 }
@@ -93,11 +128,36 @@ app.use('/api/orders', proxyWithPrefix(services.order, '/api/orders'));
 
 app.use('/api/payments', proxyWithPrefix(services.payment, '/api/payments'));
 
+// Centralized error handler
+app.use(createErrorHandler(logger));
+
+process.on('uncaughtException', (err) => {
+  logger.error('Uncaught Exception in gateway process', err);
+});
+
+process.on('unhandledRejection', (reason) => {
+  logger.error(
+    'Unhandled Rejection in gateway process',
+    reason instanceof Error ? reason : new Error(String(reason))
+  );
+});
+
 if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`Gateway running on ${PORT}`);
-    console.log('Proxy targets:', services);
+  const server = app.listen(PORT, () => {
+    logger.info(`Gateway running on ${PORT}`);
+    logger.info('Proxy targets configured', { targets: services });
   });
+
+  const shutdown = (signal) => {
+    logger.info(`Received ${signal}, shutting down gateway gracefully...`);
+    server.close(() => {
+      logger.info('Gateway HTTP server closed.');
+      process.exit(0);
+    });
+  };
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 }
 
 module.exports = {
@@ -106,4 +166,5 @@ module.exports = {
   requireAuth,
   proxyWithPrefix,
   services,
+  logger,
 };

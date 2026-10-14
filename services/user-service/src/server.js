@@ -3,21 +3,55 @@ const cors = require('cors');
 const { connectDB } = require('./config/db');
 const { port, mongoUri, rabbitUrl, frontendOrigin } = require('./config/env');
 const { connectRabbit } = require('@repo/event-bus');
+const {
+  createLogger,
+  createTelemetryMiddleware,
+  correlationMiddleware,
+  createErrorHandler,
+} = require('@repo/observability');
 const authRoutes = require('./routes/authRoutes');
 
-async function start() {
-  await connectDB(mongoUri);
+const logger = createLogger('user-service');
 
-  const rabbit = await connectRabbit(rabbitUrl);
+async function start() {
+  logger.info('Starting user-service: initializing dependencies...');
+  try {
+    await connectDB(mongoUri);
+    logger.info('Connected to MongoDB database');
+  } catch (dbErr) {
+    logger.error('Failed to connect to MongoDB', dbErr);
+    throw dbErr;
+  }
+
+  let rabbit;
+  try {
+    rabbit = await connectRabbit(rabbitUrl);
+    logger.info('Connected to RabbitMQ message broker');
+  } catch (rabbitErr) {
+    logger.error('Failed to connect to RabbitMQ', rabbitErr);
+    throw rabbitErr;
+  }
 
   const app = express();
   app.locals.channel = rabbit.channel;
 
+  // 1. Correlation tracking
+  app.use(correlationMiddleware);
+
+  // 2. API Telemetry with swagger-stats
+  app.use(createTelemetryMiddleware('user-service'));
+
+  // 3. CORS & Parsing
   app.use(cors({ origin: frontendOrigin, credentials: true }));
   app.use(express.json());
 
+  // 4. Request logging
   app.use((req, res, next) => {
-    console.log('[USER SERVICE]', req.method, req.originalUrl);
+    logger.info(`${req.method} ${req.originalUrl}`, {
+      correlationId: req.correlationId,
+      method: req.method,
+      path: req.originalUrl,
+    });
     next();
   });
 
@@ -26,12 +60,44 @@ async function start() {
   );
   app.use('/api/auth', authRoutes);
 
-  app.listen(port, () => {
-    console.log(`User service running on ${port}`);
+  // 5. Centralized Error Handler
+  app.use(createErrorHandler(logger));
+
+  const server = app.listen(port, () => {
+    logger.info(`User service running on ${port}`);
+  });
+
+  const shutdown = (signal) => {
+    logger.info(`Received ${signal}, shutting down user-service gracefully...`);
+    server.close(() => {
+      logger.info('User service HTTP server closed.');
+      process.exit(0);
+    });
+  };
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
+
+  return { app, server };
+}
+
+process.on('uncaughtException', (err) => {
+  logger.error('Uncaught Exception in user-service', err);
+});
+
+process.on('unhandledRejection', (reason) => {
+  logger.error(
+    'Unhandled Rejection in user-service',
+    reason instanceof Error ? reason : new Error(String(reason))
+  );
+});
+
+if (require.main === module) {
+  start().catch((error) => {
+    logger.error('User service failed to start', error);
+    process.exit(1);
   });
 }
 
-start().catch((error) => {
-  console.error('User service failed to start', error);
-  process.exit(1);
-});
+module.exports = { start, logger };
+

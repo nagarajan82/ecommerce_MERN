@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import '../styles/auth.css';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 export function setStoredAuth(data) {
   localStorage.setItem('mf_auth', JSON.stringify(data));
@@ -75,74 +76,76 @@ export default function App({ apiBaseUrl, mode = 'login' }) {
   }
 
   return (
-    <section className='auth-page'>
-      <div className='auth-card'>
-        <div className='auth-card__left'>
-          <h1 className='auth-card__title'>{copy.title}</h1>
-          <p className='auth-card__subtitle'>{copy.subtitle}</p>
-        </div>
+    <ErrorBoundary appName='auth-mfe'>
+      <section className='auth-page'>
+        <div className='auth-card'>
+          <div className='auth-card__left'>
+            <h1 className='auth-card__title'>{copy.title}</h1>
+            <p className='auth-card__subtitle'>{copy.subtitle}</p>
+          </div>
 
-        <div className='auth-card__right'>
-          <form className='auth-form' onSubmit={handleSubmit}>
-            {!isLogin ? (
+          <div className='auth-card__right'>
+            <form className='auth-form' onSubmit={handleSubmit}>
+              {!isLogin ? (
+                <input
+                  className='auth-input'
+                  type='text'
+                  placeholder='Enter your name'
+                  value={form.name}
+                  onChange={(event) =>
+                    setForm({ ...form, name: event.target.value })
+                  }
+                  required
+                />
+              ) : null}
+
               <input
                 className='auth-input'
-                type='text'
-                placeholder='Enter your name'
-                value={form.name}
+                type='email'
+                placeholder='Enter email'
+                value={form.email}
                 onChange={(event) =>
-                  setForm({ ...form, name: event.target.value })
+                  setForm({ ...form, email: event.target.value })
                 }
                 required
               />
-            ) : null}
 
-            <input
-              className='auth-input'
-              type='email'
-              placeholder='Enter email'
-              value={form.email}
-              onChange={(event) =>
-                setForm({ ...form, email: event.target.value })
-              }
-              required
-            />
+              <input
+                className='auth-input'
+                type='password'
+                placeholder='Enter password'
+                value={form.password}
+                onChange={(event) =>
+                  setForm({ ...form, password: event.target.value })
+                }
+                required
+              />
 
-            <input
-              className='auth-input'
-              type='password'
-              placeholder='Enter password'
-              value={form.password}
-              onChange={(event) =>
-                setForm({ ...form, password: event.target.value })
-              }
-              required
-            />
+              {message ? (
+                <div className='message message-error'>{message}</div>
+              ) : null}
+              {success ? (
+                <div className='message message-success'>{success}</div>
+              ) : null}
 
-            {message ? (
-              <div className='message message-error'>{message}</div>
-            ) : null}
-            {success ? (
-              <div className='message message-success'>{success}</div>
-            ) : null}
+              <button
+                type='submit'
+                className='btn btn-secondary auth-submit'
+                disabled={submitting}
+              >
+                {submitting ? 'Please wait...' : copy.title}
+              </button>
 
-            <button
-              type='submit'
-              className='btn btn-secondary auth-submit'
-              disabled={submitting}
-            >
-              {submitting ? 'Please wait...' : copy.title}
-            </button>
-
-            <p className='auth-form__switch'>
-              {isLogin ? 'New to the store?' : 'Already have an account?'}{' '}
-              <a href={isLogin ? '/signup' : '/login'}>
-                {isLogin ? 'Create an account' : 'Log in'}
-              </a>
-            </p>
-          </form>
+              <p className='auth-form__switch'>
+                {isLogin ? 'New to the store?' : 'Already have an account?'}{' '}
+                <a href={isLogin ? '/signup' : '/login'}>
+                  {isLogin ? 'Create an account' : 'Log in'}
+                </a>
+              </p>
+            </form>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </ErrorBoundary>
   );
 }
