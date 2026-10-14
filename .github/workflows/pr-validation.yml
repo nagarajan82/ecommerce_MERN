@@ -209,3 +209,54 @@ jobs:
 
       - name: Validate Docker Compose configuration
         run: docker compose config --quiet
+
+  trivy-security-scan:
+    name: Trivy Security Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Trivy Security Scanner (Console Table)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'table'
+          exit-code: '0'
+          severity: 'CRITICAL,HIGH'
+          scanners: 'vuln,misconfig,secret'
+          skip-dirs: '.code-review-graph,coverage,dist'
+
+      - name: Run Trivy Security Scanner (SARIF Output)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          exit-code: '0'
+          severity: 'CRITICAL,HIGH'
+          scanners: 'vuln,misconfig,secret'
+          skip-dirs: '.code-review-graph,coverage,dist'
+
+      - name: Upload Trivy SARIF to GitHub Security Tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        continue-on-error: true
+        with:
+          sarif_file: 'trivy-results.sarif'
+          category: 'trivy-fs'
+
+      - name: Upload Trivy SARIF Report Artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trivy-security-report
+          path: trivy-results.sarif
+          retention-days: 7
+

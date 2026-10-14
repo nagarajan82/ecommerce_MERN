@@ -1,0 +1,6 @@
+# .trivyignore
+# Use this file to suppress false positives or accepted vulnerability risks.
+# Format: CVE or vulnerability ID per line, with an optional comment starting with #.
+#
+# Examples:
+# CVE-2023-12345 # Accepted risk for dev-only dependency
