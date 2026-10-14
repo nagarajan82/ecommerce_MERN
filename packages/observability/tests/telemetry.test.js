@@ -83,4 +83,26 @@ describe('TelemetryCollector and swagger-stats middleware tests', () => {
     expect(middleware.collector.serviceName).toBe('gateway');
     expect(middleware.collector.serviceType).toBe('gateway');
   });
+
+  test('handles 500 status codes with immediate flush schedule and respects buffer capacity', () => {
+    const smallCollector = new TelemetryCollector('test-svc', { capacity: 2 });
+    const req = { method: 'GET', originalUrl: '/fail' };
+    const res = { statusCode: 500 };
+    const rrr = { method: 'GET', path: '/fail', code: 500, duration: 10 };
+
+    smallCollector.record(req, res, rrr);
+    smallCollector.record(req, res, rrr);
+    smallCollector.record(req, res, rrr);
+
+    expect(smallCollector.getRecords().length).toBe(2);
+    smallCollector.clearRecords();
+  });
+
+  test('flush handles bulk error gracefully and tracks retries', async () => {
+    elasticClient.bulkIndex.mockRejectedValueOnce(new Error('ES error'));
+    collector.queue.push({ test: 1 });
+    const res = await collector.flush();
+    expect(res.success).toBe(false);
+    expect(res.error).toBe('ES error');
+  });
 });
