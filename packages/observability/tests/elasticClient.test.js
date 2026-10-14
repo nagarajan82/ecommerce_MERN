@@ -79,4 +79,85 @@ describe('ElasticClient Service - Isolation & Boundary Mocking', () => {
     expect(health.configured).toBe(true);
     expect(health.status).toBe('connected');
   });
+
+  test('returns count 0 if documents empty or null', async () => {
+    const resEmpty = await elasticClient.bulkIndex('test', []);
+    expect(resEmpty).toEqual({ count: 0 });
+    const resNull = await elasticClient.bulkIndex('test', null);
+    expect(resNull).toEqual({ count: 0 });
+  });
+
+  test('throws ES_BULK_ERROR when bulk response contains errors', async () => {
+    process.env.ELASTICSEARCH_URL = 'http://localhost:9200';
+    process.env.ELASTIC_API_KEY = 'test-api-key';
+    resetCredentialsCache();
+
+    mockBulk.mockResolvedValue({
+      errors: true,
+      items: [{ index: { error: { reason: 'Mapper parsing exception' } } }]
+    });
+
+    await expect(elasticClient.bulkIndex('backend-logs', [{ msg: 'err' }])).rejects.toThrow(
+      'Mapper parsing exception'
+    );
+
+    mockBulk.mockResolvedValue({
+      errors: true,
+      items: []
+    });
+
+    await expect(elasticClient.bulkIndex('backend-logs', [{ msg: 'err' }])).rejects.toThrow(
+      'Bulk indexing encountered errors'
+    );
+  });
+
+  test('indexDocument indexes single document when configured or throws when not', async () => {
+    delete process.env.ELASTICSEARCH_URL;
+    delete process.env.ELASTIC_API_KEY;
+    resetCredentialsCache();
+
+    await expect(elasticClient.indexDocument('test', { a: 1 })).rejects.toThrow(
+      'Elasticsearch storage is not configured'
+    );
+
+    process.env.ELASTICSEARCH_URL = 'http://localhost:9200';
+    process.env.ELASTIC_API_KEY = 'test-api-key';
+    resetCredentialsCache();
+
+    mockIndex.mockResolvedValue({ result: 'created' });
+    const res = await elasticClient.indexDocument('test', { a: 1 });
+    expect(res.result).toBe('created');
+    expect(mockIndex).toHaveBeenCalledWith({ index: 'test', document: { a: 1 } });
+  });
+
+  test('reports error status when ping throws', async () => {
+    process.env.ELASTICSEARCH_URL = 'http://localhost:9200';
+    process.env.ELASTIC_API_KEY = 'test-api-key';
+    resetCredentialsCache();
+
+    mockPing.mockRejectedValue(new Error('Connection timeout'));
+    const health = await elasticClient.checkHealth();
+    expect(health.configured).toBe(true);
+    expect(health.status).toBe('error');
+    expect(health.message).toBe('Connection timeout');
+
+    mockPing.mockRejectedValue({});
+    const healthNoMsg = await elasticClient.checkHealth();
+    expect(healthNoMsg.message).toBe('Ping failed');
+  });
+
+  test('allows setClient and setClientConstructor', () => {
+    const customMock = { ping: jest.fn() };
+    elasticClient.setClient(customMock);
+    expect(elasticClient.getClient()).toBe(customMock);
+
+    elasticClient.resetClient();
+    const mockCtor = function() { return { isCustom: true }; };
+    mockCtor._isMockFunction = true;
+    elasticClient.setClientConstructor(mockCtor);
+    process.env.ELASTICSEARCH_URL = 'http://localhost:9200';
+    process.env.ELASTIC_API_KEY = 'test-api-key';
+    resetCredentialsCache();
+    expect(elasticClient.getClient().isCustom).toBe(true);
+  });
 });

@@ -71,4 +71,10 @@ describe('Correlation Middleware & Error Handler', () => {
       })
     );
   });
+
+  test('generateTraceId generates valid trace IDs', () => {
+    const id = generateTraceId();
+    expect(typeof id).toBe('string');
+    expect(id.length).toBeGreaterThan(0);
+  });
 });

@@ -185,4 +185,14 @@ describe('Logs Route POST /api/logs', () => {
     expect(res.status).toBe(404);
     expect(res.body.error).toBe('Not Found');
   });
+
+  it('handles malformed JSON payload with 400', async () => {
+    const res = await request(app)
+      .post('/api/logs')
+      .set('Content-Type', 'application/json')
+      .send('{"invalid json');
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('Validation failed');
+  });
 });
