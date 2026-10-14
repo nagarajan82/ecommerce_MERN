@@ -160,4 +160,14 @@ describe('ElasticClient Service - Isolation & Boundary Mocking', () => {
     resetCredentialsCache();
     expect(elasticClient.getClient().isCustom).toBe(true);
   });
+
+  test('throws safeguard error when real client constructor used in test mode', () => {
+    elasticClient.resetClient();
+    function RealConstructor() {}
+    elasticClient.setClientConstructor(RealConstructor);
+    process.env.ELASTICSEARCH_URL = 'http://localhost:9200';
+    process.env.ELASTIC_API_KEY = 'test-api-key';
+    resetCredentialsCache();
+    expect(() => elasticClient.getClient()).toThrow('Unintended real Elasticsearch connection prevented');
+  });
 });

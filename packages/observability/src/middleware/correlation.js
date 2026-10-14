@@ -1,15 +1,10 @@
 const crypto = require('crypto');
 
 function generateTraceId() {
-  try {
-    if (typeof crypto.randomUUID === 'function') {
-      return crypto.randomUUID();
-    }
-    if (typeof crypto.randomBytes === 'function') {
-      return 'trace_' + Date.now().toString(36) + '_' + crypto.randomBytes(8).toString('hex');
-    }
-  } catch (_) {}
-  return 'trace_' + Date.now().toString(36) + '_' + process.pid.toString(36);
+  if (typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return crypto.randomBytes(16).toString('hex');
 }
 
 function correlationMiddleware(req, res, next) {

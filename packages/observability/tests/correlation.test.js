@@ -77,4 +77,21 @@ describe('Correlation Middleware & Error Handler', () => {
     expect(typeof id).toBe('string');
     expect(id.length).toBeGreaterThan(0);
   });
+
+  test('uses x-request-id header when x-correlation-id is not provided', () => {
+    const req = { headers: { 'x-request-id': 'req-id-789' } };
+    const res = { setHeader: jest.fn() };
+    const next = jest.fn();
+
+    correlationMiddleware(req, res, next);
+
+    expect(req.correlationId).toBe('req-id-789');
+    expect(res.setHeader).toHaveBeenCalledWith('x-correlation-id', 'req-id-789');
+  });
+
+  test('attachProxyCorrelation handles null or incomplete arguments gracefully', () => {
+    expect(() => attachProxyCorrelation(null, null)).not.toThrow();
+    expect(() => attachProxyCorrelation({}, {})).not.toThrow();
+    expect(() => attachProxyCorrelation({ setHeader: jest.fn() }, {})).not.toThrow();
+  });
 });
