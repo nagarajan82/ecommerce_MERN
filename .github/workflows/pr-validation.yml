@@ -55,7 +55,15 @@ jobs:
         with:
           node-version: 20.x
           cache: 'npm'
-          cache-dependency-path: ${{ matrix.package }}/package-lock.json
+          cache-dependency-path: |
+            ${{ matrix.package }}/package-lock.json
+            packages/*/package-lock.json
+
+      - name: Install shared package dependencies
+        if: startsWith(matrix.package, 'services/') || matrix.package == 'gateway'
+        run: |
+          npm ci --prefix packages/observability
+          npm ci --prefix packages/event-bus
 
       - name: Install dependencies
         working-directory: ${{ matrix.package }}
