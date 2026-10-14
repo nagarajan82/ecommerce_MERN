@@ -35,13 +35,22 @@ let localFlushTimer = null;
 let localCollectorUrl = null;
 const recentFingerprints = new Map();
 
+let fallbackCounter = 0;
 function generateId() {
   try {
-    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-      return crypto.randomUUID();
+    if (typeof crypto !== 'undefined') {
+      if (typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+      }
+      if (typeof crypto.getRandomValues === 'function') {
+        const arr = new Uint32Array(2);
+        crypto.getRandomValues(arr);
+        return 'log_' + Date.now().toString(36) + '_' + arr[0].toString(36) + arr[1].toString(36);
+      }
     }
   } catch (_) {}
-  return 'log_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 9);
+  fallbackCounter = (fallbackCounter + 1) % 1000000;
+  return 'log_' + Date.now().toString(36) + '_' + fallbackCounter.toString(36);
 }
 
 function getEnvironment() {
@@ -500,14 +509,12 @@ function setupLifecycleListeners() {
     }
 
     if (!sent && typeof fetch === 'function') {
-      try {
-        fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: payload,
-          keepalive: true
-        }).catch(() => {});
-      } catch (_) {}
+      fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload,
+        keepalive: true
+      }).catch(() => {});
     }
   }
 

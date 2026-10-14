@@ -5,8 +5,11 @@ function generateTraceId() {
     if (typeof crypto.randomUUID === 'function') {
       return crypto.randomUUID();
     }
+    if (typeof crypto.randomBytes === 'function') {
+      return 'trace_' + Date.now().toString(36) + '_' + crypto.randomBytes(8).toString('hex');
+    }
   } catch (_) {}
-  return 'trace_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 9);
+  return 'trace_' + Date.now().toString(36) + '_' + process.pid.toString(36);
 }
 
 function correlationMiddleware(req, res, next) {
