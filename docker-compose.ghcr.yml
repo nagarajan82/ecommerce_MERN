@@ -1,0 +1,43 @@
+# Docker Compose GHCR Override File
+# Overrides local build contexts with published images from GitHub Container Registry (GHCR)
+# Usage:
+#   $env:IMAGE_TAG="<commit-sha>"
+#   docker compose -f docker-compose.yml -f docker-compose.ghcr.yml pull
+#   docker compose -f docker-compose.yml -f docker-compose.ghcr.yml up -d
+
+services:
+  gateway:
+    image: ghcr.io/nagarajan82/ecommerce_mern/gateway:${IMAGE_TAG:-latest}
+
+  user-service:
+    image: ghcr.io/nagarajan82/ecommerce_mern/user-service:${IMAGE_TAG:-latest}
+
+  product-service:
+    image: ghcr.io/nagarajan82/ecommerce_mern/product-service:${IMAGE_TAG:-latest}
+
+  order-service:
+    image: ghcr.io/nagarajan82/ecommerce_mern/order-service:${IMAGE_TAG:-latest}
+
+  payment-service:
+    image: ghcr.io/nagarajan82/ecommerce_mern/payment-service:${IMAGE_TAG:-latest}
+
+  notification-service:
+    image: ghcr.io/nagarajan82/ecommerce_mern/notification-service:${IMAGE_TAG:-latest}
+
+  frontend-log-collector:
+    image: ghcr.io/nagarajan82/ecommerce_mern/frontend-log-collector:${IMAGE_TAG:-latest}
+
+  frontend:
+    image: ghcr.io/nagarajan82/ecommerce_mern/frontend:${IMAGE_TAG:-latest}
+
+  auth-mfe:
+    image: ghcr.io/nagarajan82/ecommerce_mern/auth-mfe:${IMAGE_TAG:-latest}
+
+  catalog-mfe:
+    image: ghcr.io/nagarajan82/ecommerce_mern/catalog-mfe:${IMAGE_TAG:-latest}
+
+  checkout-mfe:
+    image: ghcr.io/nagarajan82/ecommerce_mern/checkout-mfe:${IMAGE_TAG:-latest}
+
+  orders-mfe:
+    image: ghcr.io/nagarajan82/ecommerce_mern/orders-mfe:${IMAGE_TAG:-latest}
