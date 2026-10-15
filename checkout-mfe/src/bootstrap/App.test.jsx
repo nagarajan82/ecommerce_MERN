@@ -37,6 +37,14 @@ describe('checkout-mfe App Component & Helpers', () => {
       expect(getCart()).toEqual([]);
       localStorage.setItem('mf_cart', JSON.stringify([{ productId: '1', quantity: 1 }]));
       expect(getCart()).toEqual([{ productId: '1', quantity: 1 }]);
+
+      // Corrupted / malformed JSON
+      localStorage.setItem('mf_cart', 'invalid-json-{');
+      expect(getCart()).toEqual([]);
+
+      // Non-array JSON
+      localStorage.setItem('mf_cart', '{"not": "array"}');
+      expect(getCart()).toEqual([]);
     });
 
     it('setCart persists cart and count and dispatches mf-cart-changed', () => {
@@ -53,6 +61,10 @@ describe('checkout-mfe App Component & Helpers', () => {
       expect(localStorage.getItem('mf_cart_count')).toBe('3');
       expect(listener).toHaveBeenCalledTimes(1);
 
+      // Handle non-array or invalid cart passed
+      setCart('invalid');
+      expect(getCart()).toEqual([]);
+
       window.removeEventListener('mf-cart-changed', listener);
     });
 
@@ -60,6 +72,10 @@ describe('checkout-mfe App Component & Helpers', () => {
       expect(getStoredAuth()).toBeNull();
       localStorage.setItem('mf_auth', JSON.stringify({ token: 'abc' }));
       expect(getStoredAuth()).toEqual({ token: 'abc' });
+
+      // Malformed auth JSON
+      localStorage.setItem('mf_auth', 'corrupt-token-{');
+      expect(getStoredAuth()).toBeNull();
     });
 
     it('getTotal computes sum of item price multiplied by quantity', () => {

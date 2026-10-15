@@ -93,7 +93,7 @@ async function seedProducts(req, res) {
           'Wireless over-ear headphones with 30-hour battery life and immersive sound.',
         price: 7999,
         image:
-          'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1200&auto=format&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80',
         category: 'electronics',
         isNewArrival: false,
         stock: 12,
@@ -105,7 +105,7 @@ async function seedProducts(req, res) {
           'Hot-swappable mechanical keyboard with tactile switches and compact layout.',
         price: 5499,
         image:
-          'https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=1200&auto=format&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=600&auto=format&fit=crop&q=80',
         category: 'electronics',
         isNewArrival: false,
         stock: 20,
@@ -117,7 +117,7 @@ async function seedProducts(req, res) {
           'Lightweight performance shoes designed for daily runs and all-day comfort.',
         price: 3299,
         image:
-          'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=1200&auto=format&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80',
         category: 'fashion',
         isNewArrival: true,
         stock: 18,
@@ -129,7 +129,7 @@ async function seedProducts(req, res) {
           'Fitness tracking, heart-rate monitoring, sleep analysis, and notifications.',
         price: 8999,
         image:
-          'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=1200&auto=format&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80',
         category: 'accessories',
         isNewArrival: true,
         stock: 9,
@@ -141,7 +141,7 @@ async function seedProducts(req, res) {
           'Ergonomic gaming mouse with customizable DPI and programmable buttons.',
         price: 2999,
         image:
-          'https://images.unsplash.com/photo-1527814050087-3793815479db?w=1200&auto=format&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1527814050087-3793815479db?w=600&auto=format&fit=crop&q=80',
         category: 'electronics',
         isNewArrival: false,
         stock: 25,
@@ -153,7 +153,7 @@ async function seedProducts(req, res) {
           'Portable speaker with punchy bass, Bluetooth 5.0, and 12-hour playback.',
         price: 4599,
         image:
-          'https://images.unsplash.com/photo-1589003077984-894e133dabab?w=1200&auto=format&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1589003077984-894e133dabab?w=600&auto=format&fit=crop&q=80',
         category: 'electronics',
         isNewArrival: false,
         stock: 15,
@@ -165,7 +165,7 @@ async function seedProducts(req, res) {
           'Non-slip eco-friendly yoga mat designed for stretching, yoga, and floor workouts.',
         price: 1299,
         image:
-          'https://images.unsplash.com/photo-1599447421416-3414500d18a5?w=1200&auto=format&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1599447421416-3414500d18a5?w=600&auto=format&fit=crop&q=80',
         category: 'accessories',
         isNewArrival: false,
         stock: 30,
@@ -177,7 +177,7 @@ async function seedProducts(req, res) {
           'Compact adjustable dumbbells ideal for home strength training routines.',
         price: 4999,
         image:
-          'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=1200&auto=format&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=600&auto=format&fit=crop&q=80',
         category: 'accessories',
         isNewArrival: false,
         stock: 10,
@@ -189,7 +189,7 @@ async function seedProducts(req, res) {
           'Water-resistant backpack with multiple compartments for travel and office use.',
         price: 1999,
         image:
-          'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&auto=format&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=600&auto=format&fit=crop&q=80',
         category: 'fashion',
         isNewArrival: false,
         stock: 22,
@@ -201,7 +201,7 @@ async function seedProducts(req, res) {
           'UV-protected stylish sunglasses for travel, driving, and outdoor use.',
         price: 1499,
         image:
-          'https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=1200&auto=format&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=600&auto=format&fit=crop&q=80',
         category: 'accessories',
         isNewArrival: false,
         stock: 40,
@@ -213,7 +213,7 @@ async function seedProducts(req, res) {
           'Compact earbuds with noise isolation, touch controls, and charging case.',
         price: 3999,
         image:
-          'https://images.unsplash.com/photo-1606220588913-b3aacb4d2f46?w=1200&auto=format&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1606220588913-b3aacb4d2f46?w=600&auto=format&fit=crop&q=80',
         category: 'electronics',
         isNewArrival: true,
         stock: 18,
@@ -225,7 +225,7 @@ async function seedProducts(req, res) {
           'Adjustable aluminum laptop stand for better posture and airflow.',
         price: 2599,
         image:
-          'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?w=1200&auto=format&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?w=600&auto=format&fit=crop&q=80',
         category: 'accessories',
         isNewArrival: false,
         stock: 12,
@@ -237,7 +237,7 @@ async function seedProducts(req, res) {
           'Automatic drip coffee maker with timer and programmable brew settings.',
         price: 6999,
         image:
-          'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=1200&auto=format&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600&auto=format&fit=crop&q=80',
         category: 'home-appliances',
         isNewArrival: false,
         stock: 8,
@@ -249,7 +249,7 @@ async function seedProducts(req, res) {
           'HEPA-based air purifier designed for cleaner indoor air and allergy control.',
         price: 12999,
         image:
-          'https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=1200&auto=format&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=600&auto=format&fit=crop&q=80',
         category: 'home-appliances',
         isNewArrival: false,
         stock: 5,
@@ -261,7 +261,7 @@ async function seedProducts(req, res) {
           'Fast-boiling electric kettle with auto shut-off and stainless steel body.',
         price: 1999,
         image:
-          'https://images.unsplash.com/photo-1517705008128-361805f42e86?w=1200&auto=format&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1517705008128-361805f42e86?w=600&auto=format&fit=crop&q=80',
         category: 'home-appliances',
         isNewArrival: false,
         stock: 20,
@@ -273,7 +273,7 @@ async function seedProducts(req, res) {
           'High-performance smartphone with premium camera system and OLED display.',
         price: 49999,
         image:
-          'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=1200&auto=format&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600&auto=format&fit=crop&q=80',
         category: 'electronics',
         isNewArrival: true,
         stock: 10,
@@ -285,7 +285,7 @@ async function seedProducts(req, res) {
           'Slim and lightweight tablet with 10-inch display for work and streaming.',
         price: 29999,
         image:
-          'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=1200&auto=format&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=600&auto=format&fit=crop&q=80',
         category: 'electronics',
         isNewArrival: false,
         stock: 7,
@@ -297,7 +297,7 @@ async function seedProducts(req, res) {
           'Ergonomic office chair with lumbar support and adjustable height.',
         price: 8999,
         image:
-          'https://images.unsplash.com/photo-1505843513577-22bb7d21e455?w=1200&auto=format&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1505843513577-22bb7d21e455?w=600&auto=format&fit=crop&q=80',
         category: 'furniture',
         isNewArrival: false,
         stock: 6,
@@ -309,7 +309,7 @@ async function seedProducts(req, res) {
           'LED desk lamp with adjustable brightness and minimal modern design.',
         price: 1599,
         image:
-          'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=1200&auto=format&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=600&auto=format&fit=crop&q=80',
         category: 'accessories',
         isNewArrival: false,
         stock: 25,
@@ -320,7 +320,7 @@ async function seedProducts(req, res) {
         description: 'Modern silent wall clock for home and office interiors.',
         price: 999,
         image:
-          'https://images.unsplash.com/photo-1563861826100-9cb868fdbe1c?w=1200&auto=format&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1563861826100-9cb868fdbe1c?w=600&auto=format&fit=crop&q=80',
         category: 'accessories',
         isNewArrival: false,
         stock: 30,

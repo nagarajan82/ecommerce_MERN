@@ -2,7 +2,13 @@ import React from 'react';
 import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
-import App, { Header, RequireAuth, ShellPage, AppRouter } from './App';
+import App, {
+  Header,
+  RequireAuth,
+  ShellPage,
+  AppRouter,
+  safeLazyRemote,
+} from './App';
 
 describe('Frontend Shell - App and Components', () => {
   const originalLocation = window.location;
@@ -360,6 +366,45 @@ describe('Frontend Shell - App and Components', () => {
       );
 
       expect(await screen.findByTestId('mock-orders-mfe')).toBeInTheDocument();
+    });
+  });
+
+  describe('safeLazyRemote Error Resilience', () => {
+    it('gracefully catches remote loading failure and renders fallback UI', async () => {
+      const FailingRemote = safeLazyRemote(
+        () => Promise.reject(new Error('Failed to load remote script')),
+        'Test Failing Service'
+      );
+
+      render(
+        <React.Suspense fallback={<div>Loading test...</div>}>
+          <FailingRemote />
+        </React.Suspense>
+      );
+
+      expect(
+        await screen.findByRole('heading', { level: 2, name: 'Test Failing Service' })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          'This section is temporarily unavailable or still initializing. Please try again in a moment.'
+        )
+      ).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Reload' })).toBeInTheDocument();
+    });
+
+    it('safely handles invalid or corrupt cart count in localStorage without throwing', () => {
+      localStorage.setItem('mf_cart_count', 'not-a-number');
+
+      render(
+        <MemoryRouter initialEntries={['/']}>
+          <Header />
+        </MemoryRouter>
+      );
+
+      expect(screen.getByText('Shopping Cart')).toBeInTheDocument();
+      // Should default to 0 instead of NaN
+      expect(screen.getByText('0')).toBeInTheDocument();
     });
   });
 

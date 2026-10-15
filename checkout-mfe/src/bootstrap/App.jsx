@@ -3,22 +3,35 @@ import '../styles/checkout.css';
 import ErrorBoundary from '../components/ErrorBoundary';
 
 export function getCart() {
-  const raw = localStorage.getItem('mf_cart');
-  return raw ? JSON.parse(raw) : [];
+  try {
+    const raw = localStorage.getItem('mf_cart');
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (_) {
+    return [];
+  }
 }
 
 export function setCart(cart) {
-  localStorage.setItem('mf_cart', JSON.stringify(cart));
-  localStorage.setItem(
-    'mf_cart_count',
-    String(cart.reduce((sum, item) => sum + item.quantity, 0))
-  );
+  const safeCart = Array.isArray(cart) ? cart : [];
+  try {
+    localStorage.setItem('mf_cart', JSON.stringify(safeCart));
+    localStorage.setItem(
+      'mf_cart_count',
+      String(safeCart.reduce((sum, item) => sum + (Number(item?.quantity) || 0), 0))
+    );
+  } catch (_) {}
   window.dispatchEvent(new Event('mf-cart-changed'));
 }
 
 export function getStoredAuth() {
-  const raw = localStorage.getItem('mf_auth');
-  return raw ? JSON.parse(raw) : null;
+  try {
+    const raw = localStorage.getItem('mf_auth');
+    return raw ? JSON.parse(raw) : null;
+  } catch (_) {
+    return null;
+  }
 }
 
 export function getTotal(cart) {

@@ -11,25 +11,66 @@ import '../styles/global.css';
 import { clearStoredAuth, getStoredAuth } from '../lib/api';
 import ErrorBoundary from '../components/ErrorBoundary';
 
-const AuthApp = React.lazy(() => import('auth_mfe/App'));
-const CatalogApp = React.lazy(() => import('catalog_mfe/App'));
-const CheckoutApp = React.lazy(() => import('checkout_mfe/App'));
-const OrdersApp = React.lazy(() => import('orders_mfe/App'));
+export function safeLazyRemote(importFn, title = 'Service Unavailable') {
+  return React.lazy(async () => {
+    try {
+      return await importFn();
+    } catch (error) {
+      console.warn(`[frontend-shell] Failed to load remote component: ${title}`, error);
+      return {
+        default: function RemoteFallback() {
+          return (
+            <div
+              className='error-boundary-fallback page-card'
+              role='alert'
+              style={{ padding: '24px', textAlign: 'center', margin: '16px auto' }}
+            >
+              <h2>{title}</h2>
+              <p>
+                This section is temporarily unavailable or still initializing.
+                Please try again in a moment.
+              </p>
+              <button
+                type='button'
+                onClick={() => window.location.reload()}
+                className='btn btn-secondary'
+                style={{ marginTop: '12px' }}
+              >
+                Reload
+              </button>
+            </div>
+          );
+        }
+      };
+    }
+  });
+}
+
+const AuthApp = safeLazyRemote(() => import('auth_mfe/App'), 'Authentication Service');
+const CatalogApp = safeLazyRemote(() => import('catalog_mfe/App'), 'Product Catalog');
+const CheckoutApp = safeLazyRemote(() => import('checkout_mfe/App'), 'Checkout Service');
+const OrdersApp = safeLazyRemote(() => import('orders_mfe/App'), 'Orders Service');
 
 window.__API_BASE_URL__ = window.__API_BASE_URL__ || 'http://localhost:8080';
 window.__LOG_COLLECTOR_URL__ = window.__LOG_COLLECTOR_URL__ || 'http://localhost:4006';
 
+function getSafeCartCount() {
+  try {
+    const val = Number(localStorage.getItem('mf_cart_count') || 0);
+    return Number.isFinite(val) ? val : 0;
+  } catch (_) {
+    return 0;
+  }
+}
+
 export function Header() {
   const [auth, setAuth] = useState(getStoredAuth());
-  const [cartCount, setCartCount] = useState(
-    Number(localStorage.getItem('mf_cart_count') || 0)
-  );
+  const [cartCount, setCartCount] = useState(getSafeCartCount());
   const location = useLocation();
 
   useEffect(() => {
     const syncAuth = () => setAuth(getStoredAuth());
-    const syncCart = () =>
-      setCartCount(Number(localStorage.getItem('mf_cart_count') || 0));
+    const syncCart = () => setCartCount(getSafeCartCount());
 
     window.addEventListener('mf-auth-changed', syncAuth);
     window.addEventListener('mf-cart-changed', syncCart);

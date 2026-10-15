@@ -48,9 +48,9 @@ module.exports = {
         orders_mfe: 'orders_mfe@http://localhost:3004/remoteEntry.js'
       },
       shared: {
-        react: { singleton: true, requiredVersion: false },
-        'react-dom': { singleton: true, requiredVersion: false },
-        'react-router-dom': { singleton: true, requiredVersion: false }
+        react: { singleton: true, eager: true, requiredVersion: false },
+        'react-dom': { singleton: true, eager: true, requiredVersion: false },
+        'react-router-dom': { singleton: true, eager: true, requiredVersion: false }
       }
     }),
     new HtmlWebpackPlugin({ template: './public/index.html' }),

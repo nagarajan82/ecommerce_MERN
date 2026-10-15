@@ -26,16 +26,25 @@ export function formatCategoryTitle(category) {
 }
 
 export function getCart() {
-  const raw = localStorage.getItem('mf_cart');
-  return raw ? JSON.parse(raw) : [];
+  try {
+    const raw = localStorage.getItem('mf_cart');
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (_) {
+    return [];
+  }
 }
 
 export function setCart(cart) {
-  localStorage.setItem('mf_cart', JSON.stringify(cart));
-  localStorage.setItem(
-    'mf_cart_count',
-    String(cart.reduce((sum, item) => sum + item.quantity, 0))
-  );
+  const safeCart = Array.isArray(cart) ? cart : [];
+  try {
+    localStorage.setItem('mf_cart', JSON.stringify(safeCart));
+    localStorage.setItem(
+      'mf_cart_count',
+      String(safeCart.reduce((sum, item) => sum + (Number(item?.quantity) || 0), 0))
+    );
+  } catch (_) {}
   window.dispatchEvent(new Event('mf-cart-changed'));
 }
 
@@ -89,6 +98,14 @@ export function ProductCard({ product, onAdd }) {
           className='catalog-card__image'
           src={getProductImage(product)}
           alt={productTitle}
+          loading='lazy'
+          decoding='async'
+          width='280'
+          height='220'
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = 'https://via.placeholder.com/280x220?text=Product';
+          }}
         />
       </Link>
 
@@ -345,6 +362,11 @@ export function ProductDetails({ apiBaseUrl, productId }) {
           className='product-details__image'
           src={getProductImage(product)}
           alt={productTitle}
+          decoding='async'
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = 'https://via.placeholder.com/400x400?text=Product';
+          }}
         />
 
         <div className='product-details__gallery-actions'>
@@ -418,6 +440,10 @@ export function ProductDetails({ apiBaseUrl, productId }) {
 }
 
 export default function App({ apiBaseUrl }) {
+  const safeApiBaseUrl =
+    apiBaseUrl ||
+    (typeof window !== 'undefined' && window.__API_BASE_URL__) ||
+    'http://localhost:8080';
   const location = useLocation();
   const params = useParams();
 
@@ -429,9 +455,9 @@ export default function App({ apiBaseUrl }) {
   return (
     <ErrorBoundary appName='catalog-mfe'>
       {isDetailsPage ? (
-        <ProductDetails apiBaseUrl={apiBaseUrl} productId={params.id} />
+        <ProductDetails apiBaseUrl={safeApiBaseUrl} productId={params.id} />
       ) : (
-        <ProductList apiBaseUrl={apiBaseUrl} />
+        <ProductList apiBaseUrl={safeApiBaseUrl} />
       )}
     </ErrorBoundary>
   );

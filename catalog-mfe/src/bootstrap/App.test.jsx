@@ -73,6 +73,18 @@ describe('catalog-mfe App Component & Helpers', () => {
       expect(getCart()).toEqual([]);
       localStorage.setItem('mf_cart', JSON.stringify([{ productId: 'p1', quantity: 2 }]));
       expect(getCart()).toEqual([{ productId: 'p1', quantity: 2 }]);
+
+      // Corrupted / malformed JSON in localStorage
+      localStorage.setItem('mf_cart', 'invalid-json-{');
+      expect(getCart()).toEqual([]);
+
+      // Valid JSON but not an array
+      localStorage.setItem('mf_cart', '{"not": "array"}');
+      expect(getCart()).toEqual([]);
+
+      // Invalid cart passed to setCart
+      setCart('invalid');
+      expect(getCart()).toEqual([]);
     });
 
     it('setCart stores cart and count in localStorage and fires mf-cart-changed event', () => {
