@@ -15,6 +15,16 @@ export function getProductImage(product) {
   return product?.image || 'https://via.placeholder.com/280x280?text=Product';
 }
 
+export function formatCategoryTitle(category) {
+  if (!category) return 'Top deals for you';
+  const cleaned = String(category).replace(/[-_]+/g, ' ').trim();
+  return cleaned
+    .split(' ')
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}
+
 export function getCart() {
   const raw = localStorage.getItem('mf_cart');
   return raw ? JSON.parse(raw) : [];
@@ -92,6 +102,9 @@ export function ProductCard({ product, onAdd }) {
         <div className='catalog-card__price'>₹{product.price}</div>
 
         <div className='catalog-card__meta'>
+          {product.category ? (
+            <span className='category-badge'>{product.category}</span>
+          ) : null}
           {isOutOfStock ? (
             <span className='stock-badge stock-badge--out'>Out of stock</span>
           ) : product.stock <= 3 ? (
@@ -125,10 +138,27 @@ export function ProductCard({ product, onAdd }) {
   );
 }
 
-export function ProductList({ apiBaseUrl }) {
+export function ProductList({ apiBaseUrl, selectedCategory }) {
+  const location = useLocation();
+  const params = useParams();
   const [products, setProducts] = useState([]);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
+
+  const queryCategory = useMemo(() => {
+    if (selectedCategory !== undefined && selectedCategory !== null) {
+      return String(selectedCategory).trim();
+    }
+    if (params?.category) {
+      return String(params.category).trim();
+    }
+    if (location?.search) {
+      const searchParams = new URLSearchParams(location.search);
+      const cat = searchParams.get('category');
+      if (cat) return String(cat).trim();
+    }
+    return '';
+  }, [selectedCategory, params?.category, location?.search]);
 
   useEffect(() => {
     let active = true;
@@ -136,10 +166,19 @@ export function ProductList({ apiBaseUrl }) {
     async function loadProducts() {
       try {
         setLoading(true);
-        const response = await fetch(`${apiBaseUrl}/api/products`);
+        setMessage('');
+        const url = queryCategory
+          ? `${apiBaseUrl}/api/products?category=${encodeURIComponent(queryCategory)}`
+          : `${apiBaseUrl}/api/products`;
+        const response = await fetch(url);
         const data = await response.json();
 
         if (!active) return;
+        if (!response.ok) {
+          setMessage(data?.message || 'Unable to load products.');
+          setProducts([]);
+          return;
+        }
         setProducts(Array.isArray(data) ? data : []);
       } catch (error) {
         if (!active) return;
@@ -156,7 +195,7 @@ export function ProductList({ apiBaseUrl }) {
     return () => {
       active = false;
     };
-  }, [apiBaseUrl]);
+  }, [apiBaseUrl, queryCategory]);
 
   function handleAdd(product) {
     const result = addToCart(product);
@@ -168,16 +207,17 @@ export function ProductList({ apiBaseUrl }) {
   }
 
   const hasProducts = products.length > 0;
+  const pageTitle = formatCategoryTitle(queryCategory);
+  const pageSubtitle = queryCategory
+    ? `Explore our latest collection of ${pageTitle.toLowerCase()} products.`
+    : 'Explore a cleaner ecommerce UI with product grid, details page and cart flow.';
 
   return (
     <div className='catalog-page'>
       <section className='catalog-hero page-card'>
         <div>
-          <h1 className='page-title'>Top deals for you</h1>
-          <p className='page-subtitle'>
-            Explore a cleaner ecommerce UI with product grid, details page and
-            cart flow.
-          </p>
+          <h1 className='page-title'>{pageTitle}</h1>
+          <p className='page-subtitle'>{pageSubtitle}</p>
         </div>
 
         <button
@@ -361,6 +401,9 @@ export function ProductDetails({ apiBaseUrl, productId }) {
         ) : null}
 
         <ul className='product-details__highlights'>
+          {product.category ? (
+            <li>Category: {formatCategoryTitle(product.category)}</li>
+          ) : null}
           <li>Secure checkout experience</li>
           <li>Fast async payment simulation</li>
           <li>Microfrontend product details route</li>

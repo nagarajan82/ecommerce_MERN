@@ -35,11 +35,23 @@ describe('Frontend Shell - App and Components', () => {
       ).toBeInTheDocument();
 
       // Menubar links
-      expect(screen.getByRole('link', { name: 'Home' })).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: 'Electronics' })).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: 'Fashion' })).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: 'Accessories' })).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: 'New Arrivals' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/');
+      expect(screen.getByRole('link', { name: 'Electronics' })).toHaveAttribute(
+        'href',
+        '/?category=electronics'
+      );
+      expect(screen.getByRole('link', { name: 'Fashion' })).toHaveAttribute(
+        'href',
+        '/?category=fashion'
+      );
+      expect(screen.getByRole('link', { name: 'Accessories' })).toHaveAttribute(
+        'href',
+        '/?category=accessories'
+      );
+      expect(screen.getByRole('link', { name: 'New Arrivals' })).toHaveAttribute(
+        'href',
+        '/?category=new-arrivals'
+      );
     });
 
     it('shows Login and Sign up buttons when unauthenticated', () => {
@@ -258,6 +270,16 @@ describe('Frontend Shell - App and Components', () => {
     it('renders CatalogApp remote at /products/:id', async () => {
       render(
         <MemoryRouter initialEntries={['/products/101']}>
+          <AppRouter />
+        </MemoryRouter>
+      );
+
+      expect(await screen.findByTestId('mock-catalog-mfe')).toBeInTheDocument();
+    });
+
+    it('renders CatalogApp remote at /category/:category', async () => {
+      render(
+        <MemoryRouter initialEntries={['/category/electronics']}>
           <AppRouter />
         </MemoryRouter>
       );

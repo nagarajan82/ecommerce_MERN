@@ -6,6 +6,7 @@ import App, {
   getProductTitle,
   getProductDescription,
   getProductImage,
+  formatCategoryTitle,
   getCart,
   setCart,
   addToCart,
@@ -55,6 +56,17 @@ describe('catalog-mfe App Component & Helpers', () => {
       expect(getProductImage({ image: 'http://img.jpg' })).toBe('http://img.jpg');
       expect(getProductImage({})).toContain('via.placeholder.com');
       expect(getProductImage(null)).toContain('via.placeholder.com');
+    });
+
+    it('formatCategoryTitle formats category titles correctly and handles edge cases', () => {
+      expect(formatCategoryTitle('')).toBe('Top deals for you');
+      expect(formatCategoryTitle(null)).toBe('Top deals for you');
+      expect(formatCategoryTitle(undefined)).toBe('Top deals for you');
+      expect(formatCategoryTitle('electronics')).toBe('Electronics');
+      expect(formatCategoryTitle('fashion')).toBe('Fashion');
+      expect(formatCategoryTitle('accessories')).toBe('Accessories');
+      expect(formatCategoryTitle('new-arrivals')).toBe('New Arrivals');
+      expect(formatCategoryTitle('home_appliances')).toBe('Home Appliances');
     });
 
     it('getCart returns parsed array or empty array if null or malformed', () => {
@@ -163,6 +175,16 @@ describe('catalog-mfe App Component & Helpers', () => {
 
       await user.click(addBtn);
       expect(onAdd).toHaveBeenCalledWith(product);
+    });
+
+    it('renders category badge when product has a category', () => {
+      const product = { _id: 'p4', title: 'Keyboard', price: 999, stock: 5, category: 'electronics' };
+      render(
+        <MemoryRouter>
+          <ProductCard product={product} onAdd={jest.fn()} />
+        </MemoryRouter>
+      );
+      expect(screen.getByText('electronics')).toHaveClass('category-badge');
     });
   });
 
@@ -276,6 +298,86 @@ describe('catalog-mfe App Component & Helpers', () => {
 
       jest.useRealTimers();
     });
+
+    it('fetches products with category query when selectedCategory prop is passed', async () => {
+      const mockElectronics = [
+        { _id: 'e1', title: 'Laptop', price: 60000, stock: 4, category: 'electronics' }
+      ];
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockElectronics)
+      });
+
+      render(
+        <MemoryRouter>
+          <ProductList apiBaseUrl="http://localhost:8080" selectedCategory="electronics" />
+        </MemoryRouter>
+      );
+
+      expect(await screen.findByRole('heading', { level: 1, name: 'Electronics' })).toBeInTheDocument();
+      expect(await screen.findByText('Laptop')).toBeInTheDocument();
+      expect(global.fetch).toHaveBeenCalledWith('http://localhost:8080/api/products?category=electronics');
+    });
+
+    it('fetches products with category query from URL search param ?category=fashion', async () => {
+      const mockFashion = [
+        { _id: 'f1', title: 'Jacket', price: 2500, stock: 8, category: 'fashion' }
+      ];
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockFashion)
+      });
+
+      render(
+        <MemoryRouter initialEntries={['/?category=fashion']}>
+          <ProductList apiBaseUrl="http://localhost:8080" />
+        </MemoryRouter>
+      );
+
+      expect(await screen.findByRole('heading', { level: 1, name: 'Fashion' })).toBeInTheDocument();
+      expect(await screen.findByText('Jacket')).toBeInTheDocument();
+      expect(global.fetch).toHaveBeenCalledWith('http://localhost:8080/api/products?category=fashion');
+    });
+
+    it('fetches products with category query from route param /category/:category', async () => {
+      const mockAccessories = [
+        { _id: 'a1', title: 'Watch', price: 1500, stock: 12, category: 'accessories' }
+      ];
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockAccessories)
+      });
+
+      render(
+        <MemoryRouter initialEntries={['/category/accessories']}>
+          <Routes>
+            <Route
+              path="/category/:category"
+              element={<ProductList apiBaseUrl="http://localhost:8080" />}
+            />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      expect(await screen.findByRole('heading', { level: 1, name: 'Accessories' })).toBeInTheDocument();
+      expect(await screen.findByText('Watch')).toBeInTheDocument();
+      expect(global.fetch).toHaveBeenCalledWith('http://localhost:8080/api/products?category=accessories');
+    });
+
+    it('handles non-ok API response status and sets error message', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: false,
+        json: jest.fn().mockResolvedValue({ message: 'Category not supported' })
+      });
+
+      render(
+        <MemoryRouter>
+          <ProductList apiBaseUrl="http://localhost:8080" selectedCategory="invalid" />
+        </MemoryRouter>
+      );
+
+      expect(await screen.findByText('Category not supported')).toBeInTheDocument();
+    });
   });
 
   describe('ProductDetails Component', () => {
@@ -306,6 +408,30 @@ describe('catalog-mfe App Component & Helpers', () => {
       expect(screen.getByText('₹999')).toBeInTheDocument();
       expect(screen.getByText('In stock')).toBeInTheDocument();
       expect(screen.getByRole('link', { name: '← Back to products' })).toHaveAttribute('href', '/');
+    });
+
+    it('displays product category in highlights when available', async () => {
+      const mockProduct = {
+        _id: 'p1',
+        title: 'Super Phone',
+        description: 'Smartphone with great camera',
+        price: 999,
+        stock: 4,
+        category: 'electronics'
+      };
+
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockProduct)
+      });
+
+      render(
+        <MemoryRouter>
+          <ProductDetails apiBaseUrl="http://localhost:8080" productId="p1" />
+        </MemoryRouter>
+      );
+
+      expect(await screen.findByText('Category: Electronics')).toBeInTheDocument();
     });
 
     it('handles product details fetch error', async () => {

@@ -107,16 +107,16 @@ export function Header() {
         <Link to='/' className='menubar__link'>
           Home
         </Link>
-        <Link to='/' className='menubar__link'>
+        <Link to='/?category=electronics' className='menubar__link'>
           Electronics
         </Link>
-        <Link to='/' className='menubar__link'>
+        <Link to='/?category=fashion' className='menubar__link'>
           Fashion
         </Link>
-        <Link to='/' className='menubar__link'>
+        <Link to='/?category=accessories' className='menubar__link'>
           Accessories
         </Link>
-        <Link to='/' className='menubar__link'>
+        <Link to='/?category=new-arrivals' className='menubar__link'>
           New Arrivals
         </Link>
       </div>
@@ -164,6 +164,10 @@ export function AppRouter() {
           <Suspense fallback={<div className='shell-loader'>Loading...</div>}>
             <Routes>
               <Route path='/' element={<CatalogApp {...remoteProps} />} />
+              <Route
+                path='/category/:category'
+                element={<CatalogApp {...remoteProps} />}
+              />
               <Route
                 path='/products/:id'
                 element={<CatalogApp {...remoteProps} />}

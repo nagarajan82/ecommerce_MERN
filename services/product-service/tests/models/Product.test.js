@@ -37,6 +37,20 @@ describe('Product Service - Product Model Validation', () => {
     expect(product.description).toBe('');
     expect(product.image).toBe('');
     expect(product.category).toBe('general');
+    expect(product.isNewArrival).toBe(false);
+  });
+
+  it('should trim and lowercase category and accept explicit isNewArrival', () => {
+    const product = new Product({
+      name: 'Wireless Mouse',
+      price: 1999,
+      stock: 10,
+      sku: 'ELEC-MOUSE-001',
+      category: ' Electronics ',
+      isNewArrival: true,
+    });
+    expect(product.category).toBe('electronics');
+    expect(product.isNewArrival).toBe(true);
   });
 
   it('should reject negative stock values', () => {

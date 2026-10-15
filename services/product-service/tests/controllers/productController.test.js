@@ -34,6 +34,61 @@ describe('Product Service - Product Controller', () => {
       expect(res.json).toHaveBeenCalledWith(mockProducts);
     });
 
+    it('should filter products by category case-insensitively', async () => {
+      req.query = { category: 'electronics' };
+      const mockProducts = [{ _id: 'p1', name: 'Keyboard', category: 'electronics' }];
+      const sortMock = jest.fn().mockResolvedValue(mockProducts);
+      Product.find.mockReturnValue({ sort: sortMock });
+
+      await listProducts(req, res);
+
+      expect(Product.find).toHaveBeenCalledWith({
+        category: { $regex: /^electronics$/i },
+      });
+      expect(sortMock).toHaveBeenCalledWith({ createdAt: -1 });
+      expect(res.json).toHaveBeenCalledWith(mockProducts);
+    });
+
+    it('should filter products for new-arrivals combining isNewArrival and category regex', async () => {
+      req.query = { category: 'new-arrivals' };
+      const mockProducts = [{ _id: 'p1', name: 'Smart Watch', isNewArrival: true }];
+      const sortMock = jest.fn().mockResolvedValue(mockProducts);
+      Product.find.mockReturnValue({ sort: sortMock });
+
+      await listProducts(req, res);
+
+      expect(Product.find).toHaveBeenCalledWith({
+        $or: [
+          { isNewArrival: true },
+          { category: { $regex: /^new[- ]?arrivals?$/i } },
+        ],
+      });
+      expect(sortMock).toHaveBeenCalledWith({ createdAt: -1 });
+      expect(res.json).toHaveBeenCalledWith(mockProducts);
+    });
+
+    it('should return all products when category query is empty or whitespace', async () => {
+      req.query = { category: '   ' };
+      const mockProducts = [{ _id: 'p1', name: 'Item' }];
+      const sortMock = jest.fn().mockResolvedValue(mockProducts);
+      Product.find.mockReturnValue({ sort: sortMock });
+
+      await listProducts(req, res);
+
+      expect(Product.find).toHaveBeenCalledWith({});
+      expect(res.json).toHaveBeenCalledWith(mockProducts);
+    });
+
+    it('should reject with 400 when category filter exceeds 50 characters', async () => {
+      req.query = { category: 'a'.repeat(51) };
+
+      await listProducts(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({ message: 'Invalid category filter' });
+      expect(Product.find).not.toHaveBeenCalled();
+    });
+
     it('should return 500 on database failure', async () => {
       Product.find.mockReturnValue({
         sort: jest.fn().mockRejectedValue(new Error('DB failure')),
@@ -96,6 +151,26 @@ describe('Product Service - Product Controller', () => {
       await createProduct(req, res);
 
       expect(Product.create).toHaveBeenCalledWith(req.body);
+      expect(res.status).toHaveBeenCalledWith(201);
+      expect(res.json).toHaveBeenCalledWith(created);
+    });
+
+    it('should create product with isNewArrival flag', async () => {
+      req.body = {
+        name: 'Headphones',
+        price: 5000,
+        stock: 10,
+        sku: 'ELEC-HP-002',
+        isNewArrival: true,
+      };
+      const created = { _id: 'p2', ...req.body };
+      Product.create.mockResolvedValue(created);
+
+      await createProduct(req, res);
+
+      expect(Product.create).toHaveBeenCalledWith(
+        expect.objectContaining({ isNewArrival: true })
+      );
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith(created);
     });
