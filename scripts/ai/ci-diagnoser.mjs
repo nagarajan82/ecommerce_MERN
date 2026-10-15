@@ -373,7 +373,7 @@ ${result.text}
 // Execute when run directly
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch(err => {
-    console.error('[AI CI Diagnosis] Unhandled error during diagnosis execution:', err.message);
+    console.error('[AI CI Diagnosis] Unhandled error during diagnosis execution:', err?.message || err || 'Unknown error');
     // Never fail the workflow if diagnosis encounters an unexpected error
     process.exit(0);
   });

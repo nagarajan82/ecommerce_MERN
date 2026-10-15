@@ -49,7 +49,7 @@ export function scrubSecrets(text) {
  */
 export async function callGemini({
   apiKey,
-  model = process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+  model = process.env.GEMINI_MODEL || 'gemini-2.0-flash',
   systemInstruction = '',
   userPrompt,
   temperature = 0.2,
@@ -87,14 +87,14 @@ export async function callGemini({
   }
 
   const candidateModels = [model];
-  const standardFallbacks = ['gemini-2.5-flash', 'gemini-1.5-flash'];
+  const standardFallbacks = ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-3.8-flash'];
   for (const fb of standardFallbacks) {
     if (!candidateModels.includes(fb)) {
       candidateModels.push(fb);
     }
   }
 
-  let lastError;
+  let lastError = null;
   for (const currentModel of candidateModels) {
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(currentModel)}:generateContent`;
 
@@ -139,8 +139,10 @@ export async function callGemini({
           };
         }
 
-        // If high demand (503) or not found (404), break to next fallback model immediately if available
+        // If high demand (503) or not found (404), record error and break to next fallback model immediately
         if (response.status === 503 || response.status === 404) {
+          const errBody = await response.text().catch(() => '');
+          lastError = new Error(`Gemini API HTTP ${response.status} on ${currentModel}: ${errBody.slice(0, 200)}`);
           console.warn(`[Gemini API] Model "${currentModel}" returned HTTP ${response.status}. Trying next fallback model...`);
           break; // break retry loop to try next model in candidateModels
         }
@@ -154,7 +156,8 @@ export async function callGemini({
         }
 
         const errorBody = await response.text().catch(() => '');
-        throw new Error(`Gemini API HTTP ${response.status}: ${errorBody.slice(0, 300)}`);
+        lastError = new Error(`Gemini API HTTP ${response.status} on ${currentModel}: ${errorBody.slice(0, 300)}`);
+        throw lastError;
       } catch (err) {
         clearTimeout(timeoutTimer);
         lastError = err;
@@ -166,5 +169,5 @@ export async function callGemini({
     }
   }
 
-  throw lastError;
+  throw lastError || new Error('All candidate Gemini models failed.');
 }
