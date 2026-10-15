@@ -86,66 +86,82 @@ export async function callGemini({
     };
   }
 
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+  const candidateModels = [model];
+  const standardFallbacks = ['gemini-2.5-flash', 'gemini-1.5-flash'];
+  for (const fb of standardFallbacks) {
+    if (!candidateModels.includes(fb)) {
+      candidateModels.push(fb);
+    }
+  }
 
   let lastError;
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    const controller = new AbortController();
-    const timeoutTimer = setTimeout(() => controller.abort(), timeoutMs);
+  for (const currentModel of candidateModels) {
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(currentModel)}:generateContent`;
 
-    try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': apiKey,
-          'User-Agent': 'ecommerce-mern-ai-agent/1.0'
-        },
-        body: JSON.stringify(payload),
-        signal: controller.signal
-      });
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      const controller = new AbortController();
+      const timeoutTimer = setTimeout(() => controller.abort(), timeoutMs);
 
-      clearTimeout(timeoutTimer);
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey,
+            'User-Agent': 'ecommerce-mern-ai-agent/1.0'
+          },
+          body: JSON.stringify(payload),
+          signal: controller.signal
+        });
 
-      if (response.ok) {
-        const data = await response.json();
-        const candidate = data.candidates?.[0];
-        const text = candidate?.content?.parts?.[0]?.text || '';
-        const finishReason = candidate?.finishReason || 'UNKNOWN';
+        clearTimeout(timeoutTimer);
 
-        if (finishReason === 'SAFETY') {
+        if (response.ok) {
+          const data = await response.json();
+          const candidate = data.candidates?.[0];
+          const text = candidate?.content?.parts?.[0]?.text || '';
+          const finishReason = candidate?.finishReason || 'UNKNOWN';
+
+          if (finishReason === 'SAFETY') {
+            return {
+              text: '⚠️ **Review Notice:** The response was filtered by Gemini safety settings.',
+              finishReason,
+              modelUsed: currentModel,
+              usage: data.usageMetadata
+            };
+          }
+
           return {
-            text: '⚠️ **Review Notice:** The response was filtered by Gemini safety settings.',
+            text,
             finishReason,
+            modelUsed: currentModel,
             usage: data.usageMetadata
           };
         }
 
-        return {
-          text,
-          finishReason,
-          usage: data.usageMetadata
-        };
-      }
+        // If high demand (503) or not found (404), break to next fallback model immediately if available
+        if (response.status === 503 || response.status === 404) {
+          console.warn(`[Gemini API] Model "${currentModel}" returned HTTP ${response.status}. Trying next fallback model...`);
+          break; // break retry loop to try next model in candidateModels
+        }
 
-      // Handle Rate Limit (429) or Service Unavailable (503)
-      if ((response.status === 429 || response.status === 503) && attempt < retries) {
-        const delay = Math.pow(2, attempt) * 2000;
-        console.warn(`[Gemini API] Received HTTP ${response.status}. Retrying in ${delay}ms (attempt ${attempt + 1}/${retries})...`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-        continue;
-      }
+        // Handle Rate Limit (429)
+        if (response.status === 429 && attempt < retries) {
+          const delay = Math.pow(2, attempt) * 2000;
+          console.warn(`[Gemini API] Received HTTP 429 on ${currentModel}. Retrying in ${delay}ms (attempt ${attempt + 1}/${retries})...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
 
-      const errorBody = await response.text().catch(() => '');
-      throw new Error(`Gemini API HTTP ${response.status}: ${errorBody.slice(0, 300)}`);
-    } catch (err) {
-      clearTimeout(timeoutTimer);
-      lastError = err;
-      if (err.name === 'AbortError') {
-        throw new Error(`Gemini API request timed out after ${timeoutMs}ms`);
-      }
-      if (attempt === retries) {
-        break;
+        const errorBody = await response.text().catch(() => '');
+        throw new Error(`Gemini API HTTP ${response.status}: ${errorBody.slice(0, 300)}`);
+      } catch (err) {
+        clearTimeout(timeoutTimer);
+        lastError = err;
+        if (err.name === 'AbortError') {
+          console.warn(`[Gemini API] Request for model ${currentModel} timed out after ${timeoutMs}ms.`);
+          break;
+        }
       }
     }
   }

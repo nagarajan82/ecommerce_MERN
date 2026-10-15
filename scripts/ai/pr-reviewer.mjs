@@ -325,7 +325,7 @@ async function main() {
   const commentContent = `${COMMENT_MARKER}
 ## 🤖 AI Code Review (Gemini)
 
-**Commit:** \`${shortSha}\` | **Model:** \`${model}\` | **Files Reviewed:** ${reviewedFiles.length}${truncationBadge}
+**Commit:** \`${shortSha}\` | **Model:** \`${result.modelUsed || model}\` | **Files Reviewed:** ${reviewedFiles.length}${truncationBadge}
 
 ${result.text}
 

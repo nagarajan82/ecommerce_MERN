@@ -340,7 +340,7 @@ async function main() {
   const formattedDiagnosis = `${COMMENT_MARKER}
 ## 🤖 AI CI Failure Diagnosis (Gemini)
 
-**Workflow:** \`${workflowName}\` | **Run:** [#${runId}](${runUrl}) | **Commit:** \`${shortSha}\` | **Model:** \`${model}\`
+**Workflow:** \`${workflowName}\` | **Run:** [#${runId}](${runUrl}) | **Commit:** \`${shortSha}\` | **Model:** \`${result.modelUsed || model}\`
 
 ${result.text}
 
