@@ -35,17 +35,41 @@ export function scrubSecrets(text) {
 }
 
 /**
+ * Queries the Gemini models API to discover available generation models for this key.
+ * @param {string} apiKey
+ * @returns {Promise<string[]>}
+ */
+export async function discoverAvailableModels(apiKey) {
+  try {
+    const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models', {
+      headers: {
+        'x-goog-api-key': apiKey,
+        'User-Agent': 'ecommerce-mern-ai-agent/1.0'
+      }
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.models || [])
+      .filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
+      .map(m => m.name.replace(/^models\//, ''));
+  } catch (err) {
+    console.warn('[Gemini API] Could not dynamically query models endpoint:', err.message);
+    return [];
+  }
+}
+
+/**
  * Invokes the Gemini generateContent REST endpoint with retry and timeout.
  * @param {Object} options
  * @param {string} options.apiKey - Gemini API key
- * @param {string} [options.model] - Gemini model identifier (default: gemini-2.5-flash)
+ * @param {string} [options.model] - Gemini model identifier (default: gemini-2.0-flash)
  * @param {string} [options.systemInstruction] - System instruction guiding model persona
  * @param {string} options.userPrompt - User prompt (will be sanitized)
  * @param {number} [options.temperature] - Generation temperature (default: 0.2)
  * @param {number} [options.maxOutputTokens] - Max output tokens (default: 2048)
  * @param {number} [options.timeoutMs] - Request timeout in ms (default: 45000)
  * @param {number} [options.retries] - Number of retries on 429/503 (default: 2)
- * @returns {Promise<{ text: string, finishReason: string, usage?: object }>}
+ * @returns {Promise<{ text: string, finishReason: string, modelUsed?: string, usage?: object }>}
  */
 export async function callGemini({
   apiKey,
@@ -86,11 +110,22 @@ export async function callGemini({
     };
   }
 
-  const candidateModels = [model];
-  const standardFallbacks = ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-3.8-flash'];
-  for (const fb of standardFallbacks) {
-    if (!candidateModels.includes(fb)) {
-      candidateModels.push(fb);
+  let candidateModels = [model];
+  const discovered = await discoverAvailableModels(apiKey);
+  if (discovered.length > 0) {
+    console.log(`[Gemini API] Discovered ${discovered.length} generation models: ${discovered.slice(0, 10).join(', ')}`);
+    const sortedDiscovered = [...discovered].sort((a, b) => {
+      const aScore = a === model ? 100 : a.includes('flash') ? 10 : 1;
+      const bScore = b === model ? 100 : b.includes('flash') ? 10 : 1;
+      return bScore - aScore;
+    });
+    candidateModels = sortedDiscovered;
+  } else {
+    const standardFallbacks = ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-3.8-flash'];
+    for (const fb of standardFallbacks) {
+      if (!candidateModels.includes(fb)) {
+        candidateModels.push(fb);
+      }
     }
   }
 
