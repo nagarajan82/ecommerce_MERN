@@ -56,4 +56,16 @@ describe('User Model Schema Validation', () => {
     expect(err).toBeDefined();
     expect(err.errors.role).toBeDefined();
   });
+
+  it('should trim whitespace from name and email', () => {
+    const user = new User({
+      name: '   Charlie Brown   ',
+      email: '  Charlie@Example.Com  ',
+      passwordHash: 'hash123',
+    });
+    const err = user.validateSync();
+    expect(err).toBeUndefined();
+    expect(user.name).toBe('Charlie Brown');
+    expect(user.email).toBe('charlie@example.com');
+  });
 });
