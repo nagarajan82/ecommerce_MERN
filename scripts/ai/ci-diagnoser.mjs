@@ -340,7 +340,7 @@ async function main() {
   const formattedDiagnosis = `${COMMENT_MARKER}
 ## 🤖 AI CI Failure Diagnosis (Gemini)
 
-**Workflow:** \`${workflowName}\` | **Run:** [#${runId}](${runUrl}) | **Commit:** \`${shortSha}\` | **Model:** \`${model}\`
+**Workflow:** \`${workflowName}\` | **Run:** [#${runId}](${runUrl}) | **Commit:** \`${shortSha}\` | **Model:** \`${result.modelUsed || model}\`
 
 ${result.text}
 
@@ -373,7 +373,7 @@ ${result.text}
 // Execute when run directly
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch(err => {
-    console.error('[AI CI Diagnosis] Unhandled error during diagnosis execution:', err.message);
+    console.error('[AI CI Diagnosis] Unhandled error during diagnosis execution:', err?.message || err || 'Unknown error');
     // Never fail the workflow if diagnosis encounters an unexpected error
     process.exit(0);
   });

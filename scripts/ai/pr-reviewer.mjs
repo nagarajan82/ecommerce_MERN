@@ -325,7 +325,7 @@ async function main() {
   const commentContent = `${COMMENT_MARKER}
 ## 🤖 AI Code Review (Gemini)
 
-**Commit:** \`${shortSha}\` | **Model:** \`${model}\` | **Files Reviewed:** ${reviewedFiles.length}${truncationBadge}
+**Commit:** \`${shortSha}\` | **Model:** \`${result.modelUsed || model}\` | **Files Reviewed:** ${reviewedFiles.length}${truncationBadge}
 
 ${result.text}
 
@@ -340,7 +340,7 @@ ${result.text}
 // Execute when run directly
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch(err => {
-    console.error('[AI PR Review] Unhandled error during review execution:', err.message);
+    console.error('[AI PR Review] Unhandled error during review execution:', err?.message || err || 'Unknown error');
     // Exit with 0 so review failures do not block the developer's PR or CI status
     process.exit(0);
   });
