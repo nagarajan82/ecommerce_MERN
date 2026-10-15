@@ -30,7 +30,7 @@ describe('User Model Schema Validation', () => {
       email: 'bob@example.com',
       passwordHash: 'hash123',
     });
-    expect(user.role).toBe('customer');
+    expect(user.role).toBe('invalid_role_for_ai_test');
   });
 
   it('should accept admin as valid role', () => {
